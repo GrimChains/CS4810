@@ -46,17 +46,33 @@ while (line != "") :
 		x2 = list2[0]
 		y2 = list2[1]
 		length = math.sqrt(pow((x1-x2), 2) + pow((y1-y2), 2))
-		if y1 == y2 : # Edgecase, to prevent a divide by zero error
-			dy = 1
-			dx = x1-x2
-		elif (x1-x2) > (y1-y2) :
-			dy = 1
-			dx = (x1-x2)/length
-		elif (x1-x2) < (y1-y2) :
-			dy = (y1-y2)/length
-			dx = 1
-		flag = true
+		
+		# This is the DDA algorithm with the forced progression. It's janky as fuck, but I'll come back to it later.
+		#if abs(x1-x2) > abs(y1-y2) :
+		#	dx = 1
+		#	dy = abs(y1-y2)/length
+		#elif abs(x1-x2) <= abs(y1-y2) :
+		#	dx = abs(x1-x2)/length
+		#	dy = 1
+
+		dx = abs(x1-x2)/length
+		dy = abs(y1-y2)/length
+		if x1 > x2 :
+			dx *= -1
+		if y1 > y2 :
+			dy *= -1
+		flag = True
+		xiter = x1 + dx
+		yiter = y1 + dy
+		hexNum = parse[3]
+		red = hexNum[1] + hexNum[2]
+		green = hexNum[3] + hexNum[4]
+		blue = hexNum[5] + hexNum[6]
 		while flag :
-			
-			
+			putpixel((math.ceil(xiter), math.ceil(yiter)), (int(red, 16), int(green, 16), int(blue, 16), 255))
+			yiter = yiter + dy
+			xiter = xiter + dx
+			flag = not((x1 > x2 and x2 > xiter) or (x1 < x2 and x2 < xiter) or (y1 > y2 and y2 > yiter) or (y1 < y2 and y2 < yiter)) # Basically checking to see if we've over-stepped the endpoints of the line.
+		img.save(fileName)
 	line = fread.readline()
+img.save(fileName)
