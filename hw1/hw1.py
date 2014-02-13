@@ -47,33 +47,16 @@ while (line != "") :
 		y2 = list2[1]
 		length = math.sqrt(pow((x1-x2), 2) + pow((y1-y2), 2))
 		if y1 == y2 : # Edgecase, to prevent a divide by zero error
-			if y1 > y2 :
-				yiter = y2
-				while yiter < y1 :
-					hexcolor = parse[3]
-					red = hexcolor[1] + hexcolor[2]
-					blue = hexcolor[3] + hexcolor[4]
-					green = hexcolor[5] + hexcolor[6]
-					putpixel((x1, yiter), int(red, 16), int(blue, 16), int(green, 16), 255)
-					yiter += 1
-					print yiter
-			else :
-				yiter = y1
-				while yiter < y2 :
-					hexcolor = parse[3]
-					red = hexcolor[1] + hexcolor[2]
-					blue = hexcolor[3] + hexcolor[4]
-					green = hexcolor[5] + hexcolor[6]
-					putpixel((x1, yiter), int(red, 16), int(blue, 16), int(green, 16), 255)
-					yiter += 1
-					print yiter
-		else :
-			m = (x1-x2)/(y1-y2)
-			if m > 1 :
-				dx = 1
-				dy = (y1-y2)/length
-			else :
-				dx = (x1-x2)/length
-				dy = 1
+			dy = 1
+			dx = x1-x2
+		elif (x1-x2) > (y1-y2) :
+			dy = 1
+			dx = (x1-x2)/length
+		elif (x1-x2) < (y1-y2) :
+			dy = (y1-y2)/length
+			dx = 1
+		flag = true
+		while flag :
+			
 			
 	line = fread.readline()
