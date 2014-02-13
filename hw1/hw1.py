@@ -21,9 +21,6 @@ def drawlineh( vertex1, vertex2, hexNum1, hexNum2):
 def drawline( vertex1, vertex2, red1, green1, blue1, red2, green2, blue2):
 	pass
 	# Set up location vectors
-	print vertex1
-	print vertex2
-	print "============="
 	x1 = vertex1[0]
 	y1 = vertex1[1]
 	x2 = vertex2[0]
@@ -96,12 +93,12 @@ def cubicc ( parse ) :
 	green = int(hexNum[3] + hexNum[4], 16)
 	blue = int(hexNum[5] + hexNum[6], 16)
 	points = []
-	for x in range(1, 5) :
-		if int(parse[x]) < 0 :
-			points.append(vertexList[len(vertexList) + int(parse[x])])
+	for i in range(1, 5) :
+		if int(parse[i]) < 0 :
+			points.append(vertexList[len(vertexList) + int(parse[i])])
 		else :
-			points.append(vertexList[int(parse[1]) - 1])
-	bezier( points, red, 0, green, 0, blue, 0)
+			points.append(vertexList[int(parse[i]) - 1])
+	bezier( points, red, green, blue)
 
 def beznc ( parse ) :
 	hexNum = parse[len(parse) - 1]
@@ -109,16 +106,37 @@ def beznc ( parse ) :
 	green = int(hexNum[3] + hexNum[4], 16)
 	blue = int(hexNum[5] + hexNum[6], 16)
 	points = []
-	for x in range(2, len(parse) - 1)
-		if int(parse[x]) < 0 :
-			points.append(vertexList[len(vertexList) + int(parse[x])])
+	for i in range(2, len(parse) - 1) :
+		if int(parse[i]) < 0 :
+			points.append(vertexList[len(vertexList) + int(parse[i])])
 		else :
-			points.append(vertexList[int(parse[1]) - 1])
-	bezier( points, red, 0, green, 0, blue, 0)
+			points.append(vertexList[int(parse[i]) - 1])
+	bezier( points, red, green, blue)
 
+def bezier ( points, red, green, blue ) :
+	sharp = 0.001 # sharpness of the curve. Might be just a tad bit excessive.
+	x = 0.0
+	while x < 1 :
+		x += sharp
+		drawbezier( points, red, green, blue, x)
 
-def bezier ( points, red, dr, green, dg, blue, db ) :
-
+def drawbezier ( points, red, green, blue, incr ) :
+	if len(points) < 2 :
+		putpixel((math.ceil(points[0][0]), math.ceil(points[0][1])), (red, green, blue, 255))
+		img.save(fileName)
+	else :
+		points2 = []
+		for i in range( 0, len(points)-1) :
+			vertex = []
+			vertex.append(points[i][0] - (incr * (points[i][0] - points[i+1][0]))) # appending x
+			vertex.append(points[i][1] - (incr * (points[i][1] - points[i+1][1]))) # appending y
+			# should be able to interopolate colors here. However, we're just going to pass 'em on.
+			vertex.append(points[i][2]) # appending red
+			vertex.append(points[i][3]) # appending green
+			vertex.append(points[i][4]) # appending blue
+			vertex.append(points[i][5]) # appending alpha
+			points2.append(vertex)
+		drawbezier( points2, red, green, blue, incr )
 
 #Set up png file
 line = fread.readline()
