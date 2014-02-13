@@ -1,0 +1,11 @@
+TODO : linec	: DDA isn't working properly
+DONE : lineg
+TODO : tric
+TODO : trig
+TODO : cubicc
+TODO : cubicg
+TODO : beznc
+TODO : xycrgba
+TODO : xyca
+
+5%
