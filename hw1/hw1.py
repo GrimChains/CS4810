@@ -138,6 +138,106 @@ def drawbezier ( points, red, green, blue, incr ) :
 			points2.append(vertex)
 		drawbezier( points2, red, green, blue, incr )
 
+def tric( parse ) :
+	# Get our vertecies
+	if int(parse[1]) < 0 :
+		list1 = vertexList[len(vertexList) + int(parse[1])]
+	else :
+		list1 = vertexList[int(parse[1]) - 1]
+	if int(parse[2]) < 0 :
+		list2 = vertexList[len(vertexList) + int(parse[2])]
+	else :
+		list2 = vertexList[int(parse[2]) - 1]
+	if int(parse[3]) < 0 :
+		list3 = vertexList[len(vertexList) + int(parse[3])]
+	else :
+		list3 = vertexList[int(parse[3]) - 1]
+
+	# set up colors.
+	hexNum = parse[4]
+	red = int(hexNum[1] + hexNum[2], 16)
+	green = int(hexNum[3] + hexNum[4], 16)
+	blue = int(hexNum[5] + hexNum[6], 16)
+
+	# set up faux points. We need to do this to over-ride the vertecies' colors.
+	points = []
+	points.append([list1[0], list1[1], red, green, blue, 255])
+	points.append([list2[0], list2[1], red, green, blue, 255])
+	points.append([list3[0], list3[1], red, green, blue, 255])
+	drawtri( points )
+
+def trica( parse ) :
+	# Get our vertecies
+	if int(parse[1]) < 0 :
+		list1 = vertexList[len(vertexList) + int(parse[1])]
+	else :
+		list1 = vertexList[int(parse[1]) - 1]
+	if int(parse[2]) < 0 :
+		list2 = vertexList[len(vertexList) + int(parse[2])]
+	else :
+		list2 = vertexList[int(parse[2]) - 1]
+	if int(parse[3]) < 0 :
+		list3 = vertexList[len(vertexList) + int(parse[3])]
+	else :
+		list3 = vertexList[int(parse[3]) - 1]
+
+	# set up colors.
+	hexNum = parse[4]
+	red = int(hexNum[1] + hexNum[2], 16)
+	green = int(hexNum[3] + hexNum[4], 16)
+	blue = int(hexNum[5] + hexNum[6], 16)
+	alpha = int(hexNum[7] + hexNum[8], 16)
+
+	# set up faux points. We need to do this to over-ride the vertecies' colors.
+	points = []
+	points.append([list1[0], list1[1], red, green, blue, 0.5])
+	points.append([list2[0], list2[1], red, green, blue, 0.5])
+	points.append([list3[0], list3[1], red, green, blue, 0.5])
+	drawtri( points )
+
+
+def drawtri( points ): # This is gong to be a little different from linec, since we're going to interpolate colors in the draw funciton instead of the frontend
+	edges = []
+	for a in range(0, 3) :
+		for b in range(1, 3) :
+			if a == b :
+				continue
+			x1 = points[a][0]
+			y1 = points[a][1]
+			x2 = points[b][0]
+			y2 = points[b][1]
+			length = math.sqrt(pow((x1-x2), 2) + pow((y1-y2), 2))
+			dx = abs(x1 - x2)/length
+			dy = abs(y1 - y2)/length
+			if x1 > x2 :
+				dx *= -1
+			if y1 > y2 :
+				dy *= -1
+			xiter = x1
+			yiter = y1
+			flag = True
+			while flag :
+				edges.append([math.ceil(xiter), math.ceil(yiter)]) # Not sure if the ceiling is needed here...
+				xiter += dx
+				yiter += dy
+				flag = not((x1 > x2 and x2 > xiter) or (x1 < x2 and x2 < xiter) or (y1 > y2 and y2 > yiter) or (y1 < y2 and y2 < yiter)) # Basically checking to see if we've over-stepped the endpoints of the line.
+	for n in edges :
+		for m in edges :
+			if m == n :
+				continue
+			elif n[1] == m[1] :
+				xiter = n[0]
+				if n[0] > m[0] :
+					while xiter > m[0] :
+						xiter += -1
+						putpixel((math.ceil(xiter), math.ceil(n[1])), (points[0][2], points[0][3], points[0][4], 255))
+				else :
+					while xiter < m[0] :
+						xiter += 1
+						putpixel((math.ceil(xiter), math.ceil(n[1])), (points[0][2], points[0][3], points[0][4], 255))
+
+
+
 #Set up png file
 line = fread.readline()
 info = line.split()
@@ -164,6 +264,10 @@ while (line != "") :
 		vertexList.append([float(parse[1]), float(parse[2]), int(parse[3]), int(parse[4]), int(parse[5]), int(parse[6])])
 	elif parse[0] == "linec" :
 		linec(parse)
+	elif parse[0] == "tric" :
+		tric(parse)
+	elif parse[0] == "trica" :
+		trica(parse)
 	elif parse[0] == "lineg" :
 		lineg(parse)
 	elif parse[0] == "cubicc" :
