@@ -217,100 +217,105 @@ def trig( parse ) :
 
 def drawtri( points ): # This is gong to be a little different from linec, since we're going to interpolate colors in the draw funciton instead of the frontend
 	edges = []
+	r1 = points[0][2]
+	g1 = points[0][3]
+	b1 = points[0][4]
+	r2 = points[1][2]
+	g2 = points[1][3]
+	b2 = points[1][4]
+	r3 = points[2][2]
+	g3 = points[2][3]
+	b3 = points[2][4]
 	for a in range(0, 3) :
 		for b in range(1, 3) :
 			if a == b :
 				continue
 			x1 = points[a][0]
 			y1 = points[a][1]
+			r1 = points[a][2]
+			g1 = points[a][3]
+			b1 = points[a][4]
 			x2 = points[b][0]
 			y2 = points[b][1]
+			r2 = points[b][2]
+			g2 = points[b][3]
+			b2 = points[b][4]
 			length = math.sqrt(pow((x1-x2), 2) + pow((y1-y2), 2))
 			dx = abs(x1 - x2)/length
 			dy = abs(y1 - y2)/length
+			dr = abs(r1 - r2)/length
+			dg = abs(g1 - g2)/length
+			db = abs(b1 - b2)/length
 			if x1 > x2 :
 				dx *= -1
 			if y1 > y2 :
 				dy *= -1
+			if r1 > r2 :
+				dr *= -1
+			if g1 > g2 :
+				dg *= -1
+			if b1 > b2 :
+				db *= -1
 			xiter = x1
 			yiter = y1
+			riter = r1
+			giter = g1
+			biter = b1
 			flag = True
 			while flag :
-				edges.append([math.ceil(xiter), math.ceil(yiter)]) # Not sure if the ceiling is needed here...
+				edges.append([math.ceil(xiter), math.ceil(yiter), riter, giter, biter, 255])
 				xiter += dx
 				yiter += dy
-				flag = not((x1 > x2 and x2 > xiter) or (x1 < x2 and x2 < xiter) or (y1 > y2 and y2 > yiter) or (y1 < y2 and y2 < yiter)) # Basically checking to see if we've over-stepped the endpoints of the line.
+				riter += dr
+				giter += dg
+				biter += db
+				flag = not((x1 > x2 and x2 > xiter) or (x1 < x2 and x2 < xiter) or (y1 > y2 and y2 > yiter) or (y1 < y2 and y2 < yiter)) # Basically checking to see if we've over-stepped the endpoints of the line
 	for n in edges :
 		for m in edges :
-			if m == n :
+			if n[0] == m[0] and n[1] == m[1] : # skipping same verticies
 				continue
 			elif n[1] == m[1] :
+				length = n[0] - m[0]
 				xiter = n[0]
-				if n[0] > m[0] :
+				riter = n[2]
+				giter = n[3]
+				biter = n[4]
+				x1 = n[0]
+				x2 = m[0]
+				r1 = n[2]
+				r2 = m[2]
+				g1 = n[3]
+				g2 = m[3]
+				b1 = n[4]
+				b2 = m[4]
+				dx = abs(x1 - x2)/length
+				dr = abs(r1 - r2)/length
+				dg = abs(g1 - g2)/length
+				db = abs(b1 - b2)/length
+				if x1 > x2 :
+					dx *= -1
+				if r1 > r2 :
+					dr *= -1
+				if g1 > g2 :
+					dg *= -1
+				if b1 > b2 :
+					db *= -1
+				if xiter > m[0] :
 					while xiter > m[0] :
-						# Set up distances for color interopolation
-						d1 = math.sqrt(math.pow(xiter - points[0][0], 2) + math.pow(m[1] - points[0][1], 2))
-						d2 = math.sqrt(math.pow(xiter - points[1][0], 2) + math.pow(m[1] - points[1][1], 2))
-						d3 = math.sqrt(math.pow(xiter - points[2][0], 2) + math.pow(m[1] - points[2][1], 2))
-						if d1 != 0 and d2 != 0 and d3 != 0 :
-							total = d1 + d2 + d3
-							d1 = total/d1
-							d2 = total/d2
-							d3 = total/d3
-							total = d1 + d2 + d3
-							d1 /= total
-							d2 /= total
-							d3 /= total
-						elif d1 == 0 :
-							d1 = 1
-							d2 = 0
-							d3 = 0
-						elif d2 == 0 :
-							d1 = 0
-							d2 = 1
-							d3 = 0
-						elif d3 == 0 :
-							d1 = 0
-							d2 = 0
-							d3 = 1
-						red = (d1 * points[0][2]) + (d2 * points[1][2]) + (d3 * points[2][2])
-						green = (d1 * points[0][3]) + (d2 * points[1][3]) + (d3 * points[2][3])
-						blue = (d1 * points[0][4]) + (d2 * points[1][4]) + (d3 * points[2][4])
-						xiter += -1
-						putpixel((math.ceil(xiter), math.ceil(n[1])), (red, green, blue, 255))
-				else :
+						xiter += dx
+						riter += dr
+						giter += dg
+						biter += db
+						putpixel((math.ceil(xiter), math.ceil(n[1])), (riter, giter, biter, 255))
+				if xiter < m[0] :
 					while xiter < m[0] :
-						# Set up distances for color interopolation
-						d1 = math.sqrt(math.pow(xiter - points[0][0], 2) + math.pow(m[1] - points[0][1], 2))
-						d2 = math.sqrt(math.pow(xiter - points[1][0], 2) + math.pow(m[1] - points[1][1], 2))
-						d3 = math.sqrt(math.pow(xiter - points[2][0], 2) + math.pow(m[1] - points[2][1], 2))
-						if d1 != 0 and d2 != 0 and d3 != 0 :
-							total = d1 + d2 + d3
-							d1 = total/d1
-							d2 = total/d2
-							d3 = total/d3
-							total = d1 + d2 + d3
-							d1 /= total
-							d2 /= total
-							d3 /= total
-						elif d1 == 0 :
-							d1 = 1
-							d2 = 0
-							d3 = 0
-						elif d2 == 0 :
-							d1 = 0
-							d2 = 1
-							d3 = 0
-						elif d3 == 0 :
-							d1 = 0
-							d2 = 0
-							d3 = 1
-						red = (d1 * points[0][2]) + (d2 * points[1][2]) + (d3 * points[2][2])
-						green = (d1 * points[0][3]) + (d2 * points[1][3]) + (d3 * points[2][3])
-						blue = (d1 * points[0][4]) + (d2 * points[1][4]) + (d3 * points[2][4])
-						xiter += 1
-						putpixel((math.ceil(xiter), math.ceil(n[1])), (red, green, blue, 255))
-	print points
+						xiter -= dx
+						riter += dr
+						giter += dg
+						biter += db
+						putpixel((math.ceil(xiter), math.ceil(n[1])), (riter, giter, biter, 255))
+
+
 
 
 
