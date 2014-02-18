@@ -195,6 +195,25 @@ def trica( parse ) :
 	points.append([list3[0], list3[1], red, green, blue, 0.5])
 	drawtri( points )
 
+def trig( parse ) :
+	# Get our vertecies
+	if int(parse[1]) < 0 :
+		list1 = vertexList[len(vertexList) + int(parse[1])]
+	else :
+		list1 = vertexList[int(parse[1]) - 1]
+	if int(parse[2]) < 0 :
+		list2 = vertexList[len(vertexList) + int(parse[2])]
+	else :
+		list2 = vertexList[int(parse[2]) - 1]
+	if int(parse[3]) < 0 :
+		list3 = vertexList[len(vertexList) + int(parse[3])]
+	else :
+		list3 = vertexList[int(parse[3]) - 1]
+
+	points = [list1, list2, list3]
+	drawtri( points )
+
+
 
 def drawtri( points ): # This is gong to be a little different from linec, since we're going to interpolate colors in the draw funciton instead of the frontend
 	edges = []
@@ -229,12 +248,69 @@ def drawtri( points ): # This is gong to be a little different from linec, since
 				xiter = n[0]
 				if n[0] > m[0] :
 					while xiter > m[0] :
+						# Set up distances for color interopolation
+						d1 = math.sqrt(math.pow(xiter - points[0][0], 2) + math.pow(m[1] - points[0][1], 2))
+						d2 = math.sqrt(math.pow(xiter - points[1][0], 2) + math.pow(m[1] - points[1][1], 2))
+						d3 = math.sqrt(math.pow(xiter - points[2][0], 2) + math.pow(m[1] - points[2][1], 2))
+						if d1 != 0 and d2 != 0 and d3 != 0 :
+							total = d1 + d2 + d3
+							d1 = total/d1
+							d2 = total/d2
+							d3 = total/d3
+							total = d1 + d2 + d3
+							d1 /= total
+							d2 /= total
+							d3 /= total
+						elif d1 == 0 :
+							d1 = 1
+							d2 = 0
+							d3 = 0
+						elif d2 == 0 :
+							d1 = 0
+							d2 = 1
+							d3 = 0
+						elif d3 == 0 :
+							d1 = 0
+							d2 = 0
+							d3 = 1
+						red = (d1 * points[0][2]) + (d2 * points[1][2]) + (d3 * points[2][2])
+						green = (d1 * points[0][3]) + (d2 * points[1][3]) + (d3 * points[2][3])
+						blue = (d1 * points[0][4]) + (d2 * points[1][4]) + (d3 * points[2][4])
 						xiter += -1
-						putpixel((math.ceil(xiter), math.ceil(n[1])), (points[0][2], points[0][3], points[0][4], 255))
+						putpixel((math.ceil(xiter), math.ceil(n[1])), (red, green, blue, 255))
 				else :
 					while xiter < m[0] :
+						# Set up distances for color interopolation
+						d1 = math.sqrt(math.pow(xiter - points[0][0], 2) + math.pow(m[1] - points[0][1], 2))
+						d2 = math.sqrt(math.pow(xiter - points[1][0], 2) + math.pow(m[1] - points[1][1], 2))
+						d3 = math.sqrt(math.pow(xiter - points[2][0], 2) + math.pow(m[1] - points[2][1], 2))
+						if d1 != 0 and d2 != 0 and d3 != 0 :
+							total = d1 + d2 + d3
+							d1 = total/d1
+							d2 = total/d2
+							d3 = total/d3
+							total = d1 + d2 + d3
+							d1 /= total
+							d2 /= total
+							d3 /= total
+						elif d1 == 0 :
+							d1 = 1
+							d2 = 0
+							d3 = 0
+						elif d2 == 0 :
+							d1 = 0
+							d2 = 1
+							d3 = 0
+						elif d3 == 0 :
+							d1 = 0
+							d2 = 0
+							d3 = 1
+						red = (d1 * points[0][2]) + (d2 * points[1][2]) + (d3 * points[2][2])
+						green = (d1 * points[0][3]) + (d2 * points[1][3]) + (d3 * points[2][3])
+						blue = (d1 * points[0][4]) + (d2 * points[1][4]) + (d3 * points[2][4])
 						xiter += 1
-						putpixel((math.ceil(xiter), math.ceil(n[1])), (points[0][2], points[0][3], points[0][4], 255))
+						putpixel((math.ceil(xiter), math.ceil(n[1])), (red, green, blue, 255))
+	print points
 
 
 
@@ -268,6 +344,8 @@ while (line != "") :
 		tric(parse)
 	elif parse[0] == "trica" :
 		trica(parse)
+	elif parse[0] == "trig" :
+		trig(parse)
 	elif parse[0] == "lineg" :
 		lineg(parse)
 	elif parse[0] == "cubicc" :

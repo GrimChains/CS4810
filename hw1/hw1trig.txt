@@ -1,0 +1,7 @@
+png 120 120 hw1trig.png
+
+xyrgb 20 20 255 0 0
+xyc 10 100 #00ff00
+xy 100 10
+
+trig 1 2 3
