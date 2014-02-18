@@ -1,13 +1,17 @@
 TODO : linec	: DDA isn't working properly
 DONE : lineg
 TODO : tric
-TODO : trig
+DONE : trig		: Need to fix a rogue line
 DONE : cubicc
 TODO : cubicg
 DONE : beznc
 TODO : xycrgba
 TODO : xyca
+TODO : circle
 
 005% (lineg)
 020% (cubicc)
 030% (beznc)
+050% (trig)
+060% (fann)
+070% (stripn)

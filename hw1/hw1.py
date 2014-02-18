@@ -358,6 +358,55 @@ def stripn( parse ) :
 		print parse2
 		trig( parse2 )
 
+def polynzc( parse ) :
+	hexNum = parse[len(parse) - 1]
+	red = int(hexNum[1] + hexNum[2], 16)
+	green = int(hexNum[3] + hexNum[4], 16)
+	blue = int(hexNum[5] + hexNum[6], 16)
+	points = []
+	for a in range( 1, len(parse) - 1 ) :
+		if int(parse[a]) < 0 :
+			points.append(vertexList[len(vertexList) + int(parse[a])])
+		else :
+			points.append(vertexList[int(parse[a]) - 1])
+	for n in points :
+		print n
+	edges = []
+	for a in range(0, len(points) - 2) :
+		x1 = points[a][0]
+		y1 = points[a][1]
+		x2 = points[a + 1][0]
+		y2 = points[a + 1][1]
+		length = math.sqrt(pow((x1-x2), 2) + pow((y1-y2), 2))
+		dx = abs(x1 - x2)/length
+		dy = abs(y1 - y2)/length
+		if x1 > x2 :
+			dx *= -1
+		if y1 > y2 :
+			dy *= -1
+		xiter = x1
+		yiter = y1
+		flag = True
+		while flag :
+			edges.append([math.ceil(xiter), math.ceil(yiter), red, green, blue, 255]) # keeping the variable rgb for color interopolation later
+			xiter += dx
+			yiter += dy
+			flag = not((x1 > x2 and x2 > xiter) or (x1 < x2 and x2 < xiter) or (y1 > y2 and y2 > yiter) or (y1 < y2 and y2 < yiter)) # Basically checking to see if we've over-stepped the endpoints of the line
+	for y in range(0, int(info[2])) :
+		tmp = False
+		#flag = False
+		for x in range(0, int(info[1])) :
+			for e in edges :
+				if flag :
+					putpixel((x, y), (red, green, blue, 255))
+				if x == e[0] and y == e[1] :
+					print e
+					if tmp :
+						flag = not flag
+					tmp = True
+					break
+
+
 
 
 
@@ -405,5 +454,7 @@ while (line != "") :
 		fann(parse)
 	elif parse[0] == "stripn" :
 		stripn(parse)
+	elif parse[0] == "polynzc" :
+		polynzc(parse)
 	line = fread.readline()
 img.save(fileName)
