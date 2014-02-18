@@ -1,0 +1,13 @@
+png 120 120 hw1circle.png
+
+xy    100 30
+xyc    23 99   #000000
+xyrgb  10 20   127 255 0
+xyc   103 89   #0369cf
+xyrgb  60 60   255 127 0
+
+circle 1 10
+circle 2 12
+circle 3 4
+circle 4 16
+circle 5 50 
