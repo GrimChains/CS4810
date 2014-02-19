@@ -1,0 +1,9 @@
+png 120 120 additional1.png
+
+description Uses soft-shading (interopolate color based on distance, not edge color like garoud) to draw triangles.
+
+xyrgb 20 20 255 0 0
+xyc 10 100 #00ff00
+xy 100 10
+
+trigs 1 2 3

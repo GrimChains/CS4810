@@ -138,30 +138,28 @@ def drawbezier ( points, red, green, blue, incr ) :
 
 def cubicg( parse ) :
 	points = []
-	for i in range(2, len(parse)) :
-		print i
+	for i in range(1, len(parse)) :
 		if int(parse[i]) < 0 :
 			points.append(vertexList[len(vertexList) + int(parse[i])])
 		else :
 			points.append(vertexList[int(parse[i]) - 1])
-
-	print "==============="
-	sharp = 0.001
+	sharp = 0.005
 	x = 0.0
 	while x < 1 :
 		x += sharp
 		drawbezierg( points, x )
 
-def drawbezierg( points, incr ) :
+def drawbezierg ( points, incr ) :
 	if len(points) < 2 :
 		putpixel((math.ceil(points[0][0]), math.ceil(points[0][1])), (points[0][2], points[0][3], points[0][4], 255))
 		img.save(fileName)
 	else :
 		points2 = []
-		for i in range( 0, len(points) - 1) :
+		for i in range( 0, len(points)-1) :
 			vertex = []
 			vertex.append(points[i][0] - (incr * (points[i][0] - points[i+1][0]))) # appending x
 			vertex.append(points[i][1] - (incr * (points[i][1] - points[i+1][1]))) # appending y
+			# should be able to interopolate colors here. However, we're just going to pass 'em on.
 			vertex.append(points[i][2] - (incr * (points[i][2] - points[i+1][2]))) # appending red
 			vertex.append(points[i][3] - (incr * (points[i][3] - points[i+1][3]))) # appending green
 			vertex.append(points[i][4] - (incr * (points[i][4] - points[i+1][4]))) # appending blue
@@ -343,19 +341,16 @@ def fann( parse ) :
 		parse2.append(base)
 		parse2.append(parse[n])
 		parse2.append(parse[n+1])
-		print parse2
 		trig( parse2 )
 
 def stripn( parse ) :
 	# Get our vertecies
-	print len(vertexList)
 	for n in range(2, len(parse)-2) :
 		parse2 = []
 		parse2.append("stripn")
 		parse2.append(parse[n])
 		parse2.append(parse[n+1])
 		parse2.append(parse[n+2])
-		print parse2
 		trig( parse2 )
 
 def polynzc( parse ) :
@@ -369,8 +364,6 @@ def polynzc( parse ) :
 			points.append(vertexList[len(vertexList) + int(parse[a])])
 		else :
 			points.append(vertexList[int(parse[a]) - 1])
-	for n in points :
-		print n
 	edges = []
 	for a in range(0, len(points) - 2) :
 		x1 = points[a][0]
@@ -393,18 +386,38 @@ def polynzc( parse ) :
 			yiter += dy
 			flag = not((x1 > x2 and x2 > xiter) or (x1 < x2 and x2 < xiter) or (y1 > y2 and y2 > yiter) or (y1 < y2 and y2 < yiter)) # Basically checking to see if we've over-stepped the endpoints of the line
 	for y in range(0, int(info[2])) :
-		tmp = False
+		fill = []
 		#flag = False
 		for x in range(0, int(info[1])) :
 			for e in edges :
-				if flag :
-					putpixel((x, y), (red, green, blue, 255))
 				if x == e[0] and y == e[1] :
-					print e
-					if tmp :
-						flag = not flag
-					tmp = True
+					fill.append(e)
 					break
+		for n in range(0, len(fill)-2) :
+			if fill[n][0]+1 == fill[n+1][0] :
+				putpixel((fill[n][0], y), (red, green, blue, 255))
+				del fill[n]
+				n -=1
+
+def ucbnc( parse ) :
+	hexNum = parse[len(parse)-1]
+	red = int(hexNum[1] + hexNum[2], 16)
+	green = int(hexNum[3] + hexNum[4], 16)
+	blue = int(hexNum[5] + hexNum[6], 16)
+	points = []
+	for i in range(2, len(parse) - 1) :
+		if int(parse[i]) < 0 :
+			points.append(vertexList[len(vertexList) + int(parse[i])])
+		else :
+			points.append(vertexList[int(parse[i]) - 1])
+	for p in range(0, len(points)-3) :
+		points2 = []
+		points2.append([(points[p][0] + 4*points[p+1][0] + points[p+2][1])/6, (points[p][0] + 4*points[p+1][1] + points[p+2][1])/6, red, green, blue, 255])
+		points2.append([(2*points[p+1][0] + points[p+2][1])/3, (4*points[p+1][1] + points[p+2][1])/3, red, green, blue, 255])
+		points2.append([(points[p+1][0] + 3*points[p+2][1])/3, (points[p+1][0] + points[p+2][1])/3, red, green, blue, 255])
+		points2.append([(points[p+1][0] + 4*points[p+2][0] + points[p+3][1])/6, (points[p+1][0] + 4*points[p+2][1] + points[p+3][1])/6, red, green, blue, 255])
+		bezier( points, red, green, blue)
+
 
 
 
@@ -456,5 +469,7 @@ while (line != "") :
 		stripn(parse)
 	elif parse[0] == "polynzc" :
 		polynzc(parse)
+	elif parse[0] == "ucbnc" :
+		ucbnc(parse)
 	line = fread.readline()
 img.save(fileName)
