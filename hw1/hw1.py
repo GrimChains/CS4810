@@ -112,7 +112,7 @@ def beznc ( parse ) :
 	bezier( points, red, green, blue)
 
 def bezier ( points, red, green, blue ) :
-	sharp = 0.001 # sharpness of the curve. Might be just a tad bit excessive.
+	sharp = 0.002 # sharpness of the curve. Might be just a tad bit excessive.
 	x = 0.0
 	while x < 1 :
 		x += sharp
@@ -143,7 +143,7 @@ def cubicg( parse ) :
 			points.append(vertexList[len(vertexList) + int(parse[i])])
 		else :
 			points.append(vertexList[int(parse[i]) - 1])
-	sharp = 0.005
+	sharp = 0.002
 	x = 0.0
 	while x < 1 :
 		x += sharp
