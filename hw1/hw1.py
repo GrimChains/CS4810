@@ -2,6 +2,9 @@ import Image
 import sys
 import math
 
+import warnings
+warnings.simplefilter("ignore")
+
 # File reading
 fread = open(sys.argv[1], 'r')
 
