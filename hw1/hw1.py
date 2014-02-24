@@ -2,9 +2,6 @@ import Image
 import sys
 import math
 
-import warnings
-warnings.simplefilter("ignore")
-
 # File reading
 fread = open(sys.argv[1], 'r')
 
@@ -58,7 +55,7 @@ def drawline( vertex1, vertex2, red1, green1, blue1, red2, green2, blue2):
 	# Draw loop
 	flag = True
 	while flag :
-		putpixel((math.ceil(xiter), math.ceil(yiter)), (riter, giter, biter, 255))
+		putpixel((int(math.ceil(xiter)), int(math.ceil(yiter))), (int(riter), int(giter), int(biter), 255))
 		xiter += dx
 		yiter += dy
 		riter += dr
@@ -123,7 +120,7 @@ def bezier ( points, red, green, blue ) :
 
 def drawbezier ( points, red, green, blue, incr ) :
 	if len(points) < 2 :
-		putpixel((math.ceil(points[0][0]), math.ceil(points[0][1])), (red, green, blue, 255))
+		putpixel((int(math.ceil(points[0][0])), int(math.ceil(points[0][1]))), (int(red), int(green), int(blue), 255))
 		img.save(fileName)
 	else :
 		points2 = []
@@ -154,7 +151,7 @@ def cubicg( parse ) :
 
 def drawbezierg ( points, incr ) :
 	if len(points) < 2 :
-		putpixel((math.ceil(points[0][0]), math.ceil(points[0][1])), (points[0][2], points[0][3], points[0][4], 255))
+		putpixel((int(math.ceil(points[0][0])), int(math.ceil(points[0][1]))), (int(points[0][2]), int(points[0][3]), int(points[0][4]), 255))
 		img.save(fileName)
 	else :
 		points2 = []
@@ -326,14 +323,14 @@ def drawtri( points ): # This is gong to be a little different from linec, since
 						riter += dr
 						giter += dg
 						biter += db
-						putpixel((math.ceil(xiter), math.ceil(n[1])), (riter, giter, biter, 255))
+						putpixel((int(math.ceil(xiter)), int(math.ceil(n[1]))), (int(riter), int(giter), int(biter), 255))
 				if xiter < m[0] :
 					while xiter < m[0] :
 						xiter -= dx
 						riter -= dr
 						giter -= dg
 						biter -= db
-						putpixel((math.ceil(xiter), math.ceil(n[1])), (riter, giter, biter, 255))
+						putpixel((int(math.ceil(xiter)), int(math.ceil(n[1]))), (int(riter), int(giter), int(biter), 255))
 
 def fann( parse ) :
 	# Get our vertecies
