@@ -1,0 +1,25 @@
+png 120 120 hw2tribezg.png
+
+color 1 0.4 0
+xyz -1 1 1
+color 0 2 0
+xyz -.5 .8 1
+color 0 0 1
+xyz .5 .4 1
+color 1 1 1
+xyz 1 1 1
+
+color 1 0.4 0
+xyz 1 .3 0
+xyz 0 .3 -1
+color 3 -1 -1
+xyz 1 .3 0
+
+color -1 0.4 1
+xyz -1 -.3 0
+xyz 0 -.3 0.2
+
+color 1 0.4 0
+xyz 0 -1 1
+
+tribezg 3   1 2 3 4 5 6 7 8 9 10

@@ -1,0 +1,38 @@
+png 120 120 hw2lookatortho.png
+
+# set up a simple look at and orthogonal projection
+xyz 0.3 0.3 0.3
+xyz 0.5 0.4 -0.3
+lookat 2 1 0 0.3 0.8
+ortho -1 1 -1 1 0 1
+
+# make a colored box
+xyz -0.3 -0.3 -0.3
+xyz -0.3 -0.3 0.3
+xyz -0.3 0.3 0.3
+xyz -0.3 0.3 -0.3
+xyz 0.3 -0.3 -0.3
+xyz 0.3 -0.3 0.3
+xyz 0.3 0.3 0.3
+xyz 0.3 0.3 -0.3
+
+color 1 0 0
+trif -8 -6 -7
+trif -6 -8 -5
+color 0 1 1
+trif -4 -3 -2
+trif -2 -1 -4
+
+color 0 1 0
+trif -8 -7 -4
+trif -4 -7 -3
+color 1 0 1
+trif -6 -5 -2
+trif -1 -2 -5
+
+color 0 0 1
+trif -8 -4 -5
+trif -4 -1 -5
+color 1 1 0
+trif -7 -6 -3
+trif -2 -3 -6
