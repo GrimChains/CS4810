@@ -1,0 +1,16 @@
+python ./hw2.py hw2flatlight.txt
+python ./hw2.py hw2gouraudlight.txt
+python ./hw2.py hw2lookatortho.txt
+python ./hw2.py hw2pointlightg.txt
+python ./hw2.py hw2pointlightpf.txt
+python ./hw2.py hw2pointlightpg.txt
+python ./hw2.py hw2rectbezf.txt
+python ./hw2.py hw2rectbezg.txt
+python ./hw2.py hw2rectbezglit.txt
+python ./hw2.py hw2tribezf.txt
+python ./hw2.py hw2tribezg.txt
+python ./hw2.py hw2tribezglit.txt
+python ./hw2.py hw2tripf.txt
+python ./hw2.py hw2tripg.txt
+python ./hw2.py hw2triptf.txt
+python ./hw2.py hw2triptg.txt
