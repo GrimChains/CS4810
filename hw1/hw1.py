@@ -112,7 +112,7 @@ def beznc ( parse ) :
 	bezier( points, red, green, blue)
 
 def bezier ( points, red, green, blue ) :
-	sharp = 0.002 # sharpness of the curve. Might be just a tad bit excessive.
+	sharp = 0.004 # sharpness of the curve. Might be just a tad bit excessive.
 	x = 0.0
 	while x < 1 :
 		x += sharp
@@ -121,7 +121,6 @@ def bezier ( points, red, green, blue ) :
 def drawbezier ( points, red, green, blue, incr ) :
 	if len(points) < 2 :
 		putpixel((int(math.ceil(points[0][0])), int(math.ceil(points[0][1]))), (int(red), int(green), int(blue), 255))
-		img.save(fileName)
 	else :
 		points2 = []
 		for i in range( 0, len(points)-1) :
@@ -143,7 +142,7 @@ def cubicg( parse ) :
 			points.append(vertexList[len(vertexList) + int(parse[i])])
 		else :
 			points.append(vertexList[int(parse[i]) - 1])
-	sharp = 0.002
+	sharp = 0.004
 	x = 0.0
 	while x < 1 :
 		x += sharp
