@@ -7,7 +7,7 @@ fread = open(sys.argv[1], 'r')
 
 # Important variables
 vertexList = []							# [x, y, z, ?, r, g, b, a]
-color = [1, 1, 1]						# Defaults to white
+color = [1, 1, 1]						# [r, g, b] Defaults to white
 eye = [0.0, 0.0, 0.0]					# Defaults to the origin
 bounds = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]	# [lx, rx, dy, uy, bz, fz]
 
@@ -41,3 +41,7 @@ while (line != "") :
 		continue
 	elif parse[0] == "xyz" :
 		vertexList.append([float(parse[1]), float(parse[2]), float(parse[3]), 1, 255, 255, 255, 255])
+	elif parse[0] == "color" :
+		color[0] = float(parse[1])
+		color[1] = float(parse[2])
+		color[2] = float(parse[3])
