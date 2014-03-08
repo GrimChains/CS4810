@@ -3,36 +3,24 @@ import sys
 import math
 
 def matrixmult(a, b) :
-	print len(a[0])
-	print len(a)
-	print len(b[0])
-	print len(b)
 	if len(a[0]) != len(b) :
 		raise ArithmeticError('Matrix dimensions do not match')
 	result = []
-	for x in range(0, len(a)) :
-		for y in range(0, len(b[0])) :
-			for z in range(0, len(b)) :
-
-	for x in range(0, len(a)-1) :
-		print "x"
-		print x
+	for x in range(0, len(a[0])) :
 		result.append([])
-		result[x].append(0)
-		for y in range(0, len(b[0])-1) :
-			print "y"
-			print y
-			print "z"
-			for z in range(0, len(b)) :
-				print z
-				tmp = a[x][y]
-				tmp2 = b[y][x]
-				result[x][y] += (a[z][y] * b[x][z])
+		for y in range(0, len(b)) :
+			result[x].append(0)
+			print result
+			print "++++++++++++"
+			for z in range(0, len(b[0])) :
+				result[x][y] += a[z][y] * b[x][z]
+			print result
+			print "============"
 	return result
 
 
 # File reading
-fread = open(sys.argv[1], 'r')
+# fread = open(sys.argv[1], 'r')
 
 a = []
 a.append([])
@@ -42,8 +30,8 @@ a[0].append(1)
 a[0].append(2)
 a[1].append(3)
 a[1].append(4)
-a[2].append(1)
-a[2].append(2)
+a[2].append(5)
+a[2].append(6)
 
 b = []
 b.append([])
