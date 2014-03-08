@@ -2,6 +2,15 @@ import Image
 import sys
 import math
 
+# File reading
+fread = open(sys.argv[1], 'r')
+
+# Important variables
+vertexList = []							# [x, y, z, ?, r, g, b, a]
+color = [1, 1, 1]						# Defaults to white
+eye = [0.0, 0.0, 0.0]					# Defaults to the origin
+bounds = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]	# [lx, rx, dy, uy, bz, fz]
+
 def matrixmult(a, b) :
 	if len(a[0]) != len(b) :
 		raise ArithmeticError('Matrix dimensions do not match')
@@ -19,34 +28,16 @@ def matrixmult(a, b) :
 	return result
 
 
-# File reading
-# fread = open(sys.argv[1], 'r')
+line = fread.readline()
+info = line.split()
+fileType = info[0]
+fileName = info[3]
+img = Image.new("RGBA", (int(info[1]), int(info[2])), (0,0,0,0))
+putpixel = img.im.putpixel
 
-a = []
-a.append([])
-a.append([])
-a.append([])
-a[0].append(1)
-a[0].append(2)
-a[1].append(3)
-a[1].append(4)
-a[2].append(5)
-a[2].append(6)
-
-b = []
-b.append([])
-b.append([])
-b[0].append(9)
-b[0].append(8)
-b[0].append(7)
-b[1].append(6)
-b[1].append(5)
-b[1].append(4)
-
-print a
-print b
-tmp = matrixmult(a, b)
-
-print a
-print b
-print tmp
+while (line != "") :
+	parse = line.split()
+	if parse == [] :
+		continue
+	elif parse[0] == "xyz" :
+		vertexList.append([float(parse[1]), float(parse[2]), float(parse[3]), 1, 255, 255, 255, 255])
