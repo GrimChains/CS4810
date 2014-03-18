@@ -14,3 +14,9 @@ python ./hw2.py hw2tripf.txt
 python ./hw2.py hw2tripg.txt
 python ./hw2.py hw2triptf.txt
 python ./hw2.py hw2triptg.txt
+python ./hw2.py hw2trif.txt
+python ./hw2.py hw2color.txt
+python ./hw2.py hw2depth.txt
+python ./hw2.py hw2culling.txt
+python ./hw2.py hw2lookat.txt
+python ./hw2.py hw2translate.txt
