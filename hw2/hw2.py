@@ -139,10 +139,6 @@ def gammaCorrection(color,factor):
 		return (int(pow(color.x/255.0,factor)*255),
 						int(pow(color.y/255.0,factor)*255),
 						int(pow(color.z/255.0,factor)*255))
-					   
- 
-AMBIENT = 1
-GAMMA_CORRECTION = 1/2.2
 
 def trif( parse ):
 	global vertexList
@@ -212,7 +208,6 @@ def lookat( parse ):
 	center.x = (center.x - width/2)/(width/2)
 	center.y = (center.y - height/2)/(height/2)
 	center.z = -center.z
-	
 
 	Z = Vector(eye.x - center.x, eye.y - center.y, eye.z - center.z)
 	Z = Z.normal()
@@ -224,58 +219,19 @@ def lookat( parse ):
 	Y = Z.cross(X)
 	Y = Vector(Y[0], Y[1], Y[2])
 
-	#print eye.x
-	#print eye.y
-	#print eye.z
-	#print "----"
-	#print X.x
-	#print X.y
-	#print X.z
-	#print "----"
-	#print Y.x
-	#print Y.y
-	#print Y.z
-	#print "----"
-	#print Z.x
-	#print Z.y
-	#print Z.z
-	#print "===="
 	for v in vertexList:
 		v[0] = (v[0] - width/2)/(width/2)
 		v[1] = (v[1] - height/2)/(height/2)
 		v[2] = -v[2]
 
-		#L:
-		#X.x Y.x Z.x -eye.x
-		#X.y Y.y Z.y -eye.y
-		#X.z Y.z Z.z -eye.z
-		#0   0   0   1
-		
-		#L:
-		#X.x X.y X.z -eye*X
-		#Y.x Y.y Y.z -eye*Y
-		#Z.x Z.y Z.z -eye*Z
-		#0   0   0   1
-		eye = eye * -1
 		tmp = copy.deepcopy(v)
-		v[0] = X.x*tmp[0] + X.y*tmp[1] + X.z*tmp[2] + tmp[3]*eye.dot(X)
-		v[1] = Y.x*tmp[0] + Y.y*tmp[1] + Y.z*tmp[2] + tmp[3]*eye.dot(Y)
-		v[2] = Z.x*tmp[0] + Z.y*tmp[1] + Z.z*tmp[2] + tmp[3]*eye.dot(Z)
-
-
-		#v[0] = X.x*tmp[0] + X.y*tmp[1] + X.z*tmp[2] + tmp[3]*eye.dot(X)
-		#v[1] = X.x*tmp[0] + Y.y*tmp[1] + Y.z*tmp[2] + tmp[3]*eye.dot(Y)
-		#v[2] = X.x*tmp[0] + Z.y*tmp[1] + Z.z*tmp[2] + tmp[3]*eye.dot(Z)
+		v[0] = X.x*tmp[0] + X.y*tmp[1] + X.z*tmp[2] + tmp[3]*-eye.dot(X)
+		v[1] = Y.x*tmp[0] + Y.y*tmp[1] + Y.z*tmp[2] + tmp[3]*-eye.dot(Y)
+		v[2] = Z.x*tmp[0] + Z.y*tmp[1] + Z.z*tmp[2] + tmp[3]*-eye.dot(Z)
 
 		v[0] = (v[0] * (width/2)) + (width/2)
 		v[1] = (v[1] * (height/2)) + (height/2)
 		v[2] = -v[2]
-
-		#print v
-	#eye.x = (eye.x * width/2) + (width/2)
-	#eye.y = (eye.y * height/2) + (height/2)
-	#eye.z = -eye.z
-	#print "+++++++++++++++++++++"
 
 def rotatex( parse ):
 	degree = -cos(float(parse[1]) * (pi/180))
@@ -317,16 +273,35 @@ def loadmv( parse ):
 		v[2] = -v[2]
 
 def orth( parse ):
+	global vertexList
+	vertexList = copy.deepcopy(virgin)
 	left = float(parse[1])
 	right = float(parse[2])
 	bottom = float(parse[3])
 	top = float(parse[4])
 	far = float(parse[6])
 	near = 2*float(parse[5]) - far # might have to change this to 2n - f
+
+	tx = -(right + left)/(right - left)
+	ty = -(top + bottom)/(top - bottom)
+	tz = -(far + near)/(far - near)
+
 	for v in vertexList:
-		v[0] = v[0] * (2/(right-left)) + (right + left)/(right - left)
-		v[1] = v[1] * (2/(top-bottom)) + (top + bottom)/(top - bottom)
-		v[2] = v[2] * (-2/(far-near)) + (far + near)/(far - near)
+		v[0] = (v[0] - width/2)/(width/2)
+		v[1] = (v[1] - height/2)/(height/2)
+		v[2] = -v[2]
+
+		tmp = copy.deepcopy(v)
+
+		v[0] = tmp[0] * (2/(right-left)) + (right + left)/(right - left) + tmp[3]*tx
+		v[1] = tmp[1] * (2/(top-bottom)) + (top + bottom)/(top - bottom) + tmp[3]*ty
+		v[2] = tmp[2] * (-2/(far-near)) + (far + near)/(far - near) + tmp[3]*tz
+
+
+		v[0] = (v[0]*width/2) + (width/2)
+		v[1] = (v[1]*height/2) + (height/2)
+		v[2] = -v[2]
+		print v
 
 def scalec( parse ):
 
@@ -368,15 +343,16 @@ def scalec( parse ):
 		(vertexList[v])[2] = (vertexList[v])[2] + z
 
 def multmv( parse ):
-	print parse
 
 	global vertexList
 
 	for v in vertexList:
+		print v
+	print "++++++++++"
+	for v in vertexList:
 		v[0] = (v[0] - (width/2))/(width/2)
 		v[1] = (v[1] - (height/2))/(height/2)
 		v[2] = -v[2]
-		print v
 
 		tmp = copy.deepcopy(v)
 
@@ -384,12 +360,62 @@ def multmv( parse ):
 		v[1] = tmp[0]*float(parse[5]) + tmp[1]*float(parse[6]) + tmp[2]*float(parse[7]) + tmp[3]*float(parse[8])
 		v[2] = tmp[0]*float(parse[9]) + tmp[1]*float(parse[10]) + tmp[2]*float(parse[11]) + tmp[3]*float(parse[12])
 		v[3] = tmp[0]*float(parse[13]) + tmp[1]*float(parse[14]) + tmp[2]*float(parse[15]) + tmp[3]*float(parse[16])
-		print v
 		
 		v[0] = (v[0] * (width/2)) + (width/2)
 		v[1] = (v[1] * (height/2)) + (height/2)
 		v[2] = -v[2]
+		print v
 	print "============="
+
+def frustum( parse ):
+	global vertexList
+	left = float(parse[1])
+	right = float(parse[2])
+	bottom = float(parse[3])
+	top = float(parse[4])
+	near = float(parse[5])
+	far = float(parse[6])
+
+	t1 = (2*near)/(right - left)
+	t2 = (2*near)/(top-bottom)
+	a = (right + left)/(right-left)
+	b = (top + bottom)/(top-bottom)
+	c = -(far + near)/(far - near)
+	d = -(2*far*near)/(far - near)
+
+	print t1
+	print t2
+	print a
+	print b
+	print c
+	print d
+	print "+++++++++++++"
+
+	for v in vertexList:
+		v[0] = (v[0] - width/2)/(width/2)
+		v[1] = (v[1] - height/2)/(height/2)
+		v[2] = -v[2]
+
+		tmp = copy.deepcopy(v)
+		#print tmp
+
+		v[0] = tmp[0]*t1 + tmp[2]*a
+		v[1] = tmp[1]*t2 + tmp[2]*b
+		v[2] = tmp[2]*c + tmp[3]*d
+		v[3] = v[2]*-1
+
+		#v[0] = v[0]/v[3]
+		#v[1] = v[1]/v[3]
+		#v[2] = v[2]/v[3]
+
+		v[0] = (v[0]*width/2) + (width/2)
+		v[1] = (v[1]*height/2) + (height/2)
+		v[2] = -v[2]
+		print v
+	print "=============="
+
+AMBIENT = 1
+GAMMA_CORRECTION = 1/2.2
 
 objs = []
 global vertexList
@@ -397,6 +423,7 @@ vertexList = []
 virgin = []
 color = (255, 255, 255)
 cull = False
+clip = False
 fread = open(sys.argv[1], 'r')
 line = fread.readline()
 info = line.split()
@@ -442,6 +469,11 @@ while (line != ""):
 		scalec( parse )
 	elif parse[0] == "multmv":
 		multmv( parse )
+	elif parse[0] == "frustum":
+		frustum( parse )
+	elif parse[0] == "clip":
+		clip = True
+		clipplane = [float(parse[1]), float(parse[2]), float(parse[3]), float(parse[4])]
 	line = fread.readline()
 
 lightSource = Vector(0,0,0)

@@ -27,3 +27,5 @@ python ./hw2.py hw2rotatex.txt
 python ./hw2.py hw2loadmv.txt
 python ./hw2.py hw2multmv.txt
 python ./hw2.py hw2ortho.txt
+python ./hw2.py hw2clipplane.txt
+python ./hw2.py hw2frustum.txt

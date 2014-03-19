@@ -1,0 +1,6 @@
+png 120 120 hw2frustum.png
+xyz 2 5 -2
+xyz -10 -10 -6
+frustum -2 2 -5 5 1 11
+xyz 19 -28 -10
+trif 1 2 3

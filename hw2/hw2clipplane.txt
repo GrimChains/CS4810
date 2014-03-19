@@ -1,0 +1,11 @@
+png 120 120 hw2clipplane.png
+xyz -1 -1 0.5
+xyz 1 -1 0.5
+xyz 0 1 0.5
+clipplane -0.1 -0.2 0.1 0.03
+color 0 1 0
+trif 1 2 3
+translate -0.25 0.1 -0.2 0.1
+clipplane 1 0.5 0 0.4
+color 0 0 1
+trif 1 2 3
