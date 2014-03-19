@@ -123,7 +123,8 @@ def trace(ray, objects, light, maxRecur):
 				return (0,0,0)
 		intersect = testRay(ray, objects)              
 		if intersect.d == -1:
-				col = Vector(AMBIENT,AMBIENT,AMBIENT)
+				#col = Vector(AMBIENT,AMBIENT,AMBIENT)
+				col = Vector(-1, -1, -1)
 		elif intersect.n.dot(light - intersect.p) < 0:
 				col = intersect.obj.col * AMBIENT
 		else:
@@ -234,22 +235,53 @@ def lookat( parse ):
 		v[2] = -v[2]
 
 def rotatex( parse ):
-	degree = -cos(float(parse[1]) * (pi/180))
+	global vertexList
+	degree = cos(float(parse[1]) * (pi/180))
 	for v in vertexList:
-		v[1] = cos(degree)*v[1] + sin(degree)*v[2]
-		v[2] = -sin(degree)*v[1] + cos(degree)*v[2]
+		v[0] = (v[0] - width/2)/(width/2)
+		v[1] = (v[1] - height/2)/(height/2)
+		v[2] = -v[2]
+
+		tmp = copy.deepcopy(v)
+		v[1] = cos(degree)*tmp[1] - sin(degree)*tmp[2]
+		v[2] = sin(degree)*tmp[1] + cos(degree)*tmp[2]
+
+		v[0] = (v[0] * (width/2)) + (width/2)
+		v[1] = (v[1] * (height/2)) + (height/2)
+		v[2] = -v[2]
 
 def rotatey( parse ):
-	degree = -cos(float(parse[1]) * (pi/180))
+	global vertexList
+	degree = cos(float(parse[1]) * (pi/180))
 	for v in vertexList:
-		v[0] = cos(degree)*v[0] - sin(degree)*v[2]
-		v[2] = sin(degree)*v[0] + cos(degree)*v[2]
+		v[0] = (v[0] - width/2)/(width/2)
+		v[1] = (v[1] - height/2)/(height/2)
+		v[2] = -v[2]
+
+		tmp = copy.deepcopy(v)
+		v[0] = cos(degree)*tmp[0] + sin(degree)*tmp[2]
+		v[2] = -sin(degree)*tmp[0] + cos(degree)*tmp[2]
+
+		v[0] = (v[0] * (width/2)) + (width/2)
+		v[1] = (v[1] * (height/2)) + (height/2)
+		v[2] = -v[2]
+
 
 def rotatez( parse ):
-	degree = -cos(float(parse[1]) * (pi/180))
+	global vertexList
+	degree = cos(float(parse[1]) * (pi/180))
 	for v in vertexList:
-		v[0] = cos(degree)*v[0] + sin(degree)*v[1]
-		v[1] = -sin(degree)*v[0] + cos(degree)*v[1]
+		v[0] = (v[0] - width/2)/(width/2)
+		v[1] = (v[1] - height/2)/(height/2)
+		v[2] = -v[2]
+
+		tmp = copy.deepcopy(v)
+		v[0] = cos(degree)*tmp[0] - sin(degree)*tmp[1]
+		v[1] = sin(degree)*tmp[0] + cos(degree)*tmp[1]
+
+		v[0] = (v[0] * (width/2)) + (width/2)
+		v[1] = (v[1] * (height/2)) + (height/2)
+		v[2] = -v[2]
 
 def loadmv( parse ):
 
@@ -442,6 +474,10 @@ while (line != ""):
 	elif parse[0] == "cull":
 		cull = True
 	elif parse[0] == "trif":
+		print "------------"
+		for v in vertexList:
+			print v
+		print "------------"
 		trif( parse )
 	elif parse[0] == "color":
 		red = 255*float(parse[1])
@@ -476,11 +512,12 @@ while (line != ""):
 		clipplane = [float(parse[1]), float(parse[2]), float(parse[3]), float(parse[4])]
 	line = fread.readline()
 
-lightSource = Vector(0,0,0)
+lightSource = Vector(10000,10000,10000)
 cameraPos = Vector(0,0,10)
 for x in range(width):
 		for y in range(height):
 				ray = Ray( cameraPos, (Vector(x,y,0)-cameraPos).normal())
 				col = trace(ray, objs, lightSource, 10)
-				img.putpixel((x,y),gammaCorrection(col,GAMMA_CORRECTION))
+				if col.x != -1 and col.y != -1 and col.z != -1:
+					img.putpixel((x,y),gammaCorrection(col,GAMMA_CORRECTION))
 img.save(fileName)
