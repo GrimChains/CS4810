@@ -1,4 +1,4 @@
-from math import sqrt, pow, pi
+from math import sqrt, pow, pi, cos, sin
 import Image
 import sys
  
@@ -165,8 +165,93 @@ def trif( parse ):
 	else:
 		objs.append(Triangle(Vector(vertex1[0], vertex1[1], vertex1[2]), Vector(vertex2[0], vertex2[1], vertex2[2]), Vector(vertex3[0], vertex3[1], vertex3[2]), Vector(color[0], color[1], color[2])))
 
-def translate( parse ):
+def translate( x, y, z, w ):
+	for v in range(0, len(vertexList)):
+		(vertexList[v])[0] = (vertexList[v])[0] + x
+		(vertexList[v])[1] = (vertexList[v])[1] + y
+		(vertexList[v])[2] = (vertexList[v])[2] + z
+		(vertexList[v])[3] = (vertexList[v])[3]
+
+def scale( x, y, z, w ):
+	for v in range(0, len(vertexList)):
+		# Translate back into relative form
+		(vertexList[v])[0] = ((vertexList[v])[0] - width/2)/(width/2)
+		(vertexList[v])[1] = ((vertexList[v])[1] - height/2)/(height/2)
+
+		# Scale
+		(vertexList[v])[0] = (vertexList[v])[0] * x
+		(vertexList[v])[1] = (vertexList[v])[1] * y
+		(vertexList[v])[2] = (vertexList[v])[2] * z
+
+		# Translate back into xyz
+		(vertexList[v])[0] = ((vertexList[v])[0] * width/2)+(width/2)
+		(vertexList[v])[1] = ((vertexList[v])[1] * height/2)+(height/2)
+
+def lookat( parse ):
+	print parse
+	if int(parse[1]) < 0 :
+		eye = vertexList[len(vertexList) + int(parse[1])]
+	else :
+		eye = vertexList[int(parse[1]) - 1]
+	if int(parse[2]) < 0 :
+		center = vertexList[len(vertexList) + int(parse[2])]
+	else :
+		center = vertexList[int(parse[2]) - 1]
+	print eye
+	eye = Vector(float(eye[0]), float(eye[0]), float(eye[0]))
+	center = Vector(float(center[0]), float(center[0]), float(center[0]))
+	up = Vector(float(parse[3]), float(parse[4]), float(parse[4]))
 	
+	zaxis = Vector(center.x - eye.x, center.y - eye.y, center.z - eye.z)
+	zaxis.normal()
+	tmp = up.cross(zaxis)
+	xaxis = Vector(tmp[0], tmp[1], tmp[2])
+	xaxis.normal()
+	tmp = zaxis.cross(xaxis)
+	yaxis = Vector(tmp[0], tmp[1], tmp[2])
+	print tmp
+	print xaxis.x
+	print xaxis.y
+	print xaxis.z
+	print yaxis.x
+	print yaxis.y
+	print yaxis.z
+	print zaxis.x
+	print zaxis.y
+	print zaxis.z
+	print "========"
+
+def rotatex( parse ):
+	degree = -cos(float(parse[1]) * (pi/180))
+	for v in vertexList:
+		v[1] = cos(degree)*v[1] + sin(degree)*v[2]
+		v[2] = -sin(degree)*v[1] + cos(degree)*v[2]
+
+def rotatey( parse ):
+	degree = -cos(float(parse[1]) * (pi/180))
+	for v in vertexList:
+		v[0] = cos(degree)*v[0] - sin(degree)*v[2]
+		v[2] = sin(degree)*v[0] + cos(degree)*v[2]
+
+def rotatez( parse ):
+	degree = -cos(float(parse[1]) * (pi/180))
+	for v in vertexList:
+		v[0] = cos(degree)*v[0] + sin(degree)*v[1]
+		v[1] = -sin(degree)*v[0] + cos(degree)*v[1]
+
+def loadmv( pase ):
+	for v in vertexList:
+		#v[0] = (v[0] - width/2)/(width/2)
+		#v[1] = (v[1] - height/2)/(height/2)
+		#v[2] = -v[2]
+
+		v[0] = v[0]*float(parse[1]) + v[1]*float(parse[5]) + v[2]*float(parse[9]) + float(parse[13])
+		v[1] = v[0]*float(parse[2]) + v[1]*float(parse[6]) + v[2]*float(parse[10]) + float(parse[14])
+		v[2] = v[0]*float(parse[3]) + v[1]*float(parse[7]) + v[2]*float(parse[11]) + float(parse[15])
+		
+		#v[0] = (v[0] * width/2)+(width/2)
+		#v[1] = (v[1] * height/2)+(height/2)
+		#v[2] = -v[2]
 
 objs = []
 vertexList = []
@@ -185,7 +270,7 @@ while (line != ""):
 	if parse == []:
 		parse
 	elif parse[0] == "xyz":
-		vertexList.append([(float(parse[1]) * width/2) + width/2, -(float(parse[2]) * height/2) + height/2, -float(parse[3])])
+		vertexList.append([(float(parse[1]) * width/2) + width/2, -(float(parse[2]) * height/2) + height/2, -float(parse[3]), 1])
 	elif parse[0] == "cull":
 		cull = True
 	elif parse[0] == "trif":
@@ -196,11 +281,25 @@ while (line != ""):
 		blue = 255*float(parse[3])
 		color = (red, green, blue)
 	elif parse[0] == "translate":
-		translate( parse )
+		translate( (float(parse[1]) * width/2), -(float(parse[2]) * height/2), -float(parse[3]), 1 ) 
+	elif parse[0] == "scale":
+		#scale( (float(parse[1]) * width/2), -(float(parse[2]) * height/2), -float(parse[3]), 1 )
+		scale( float(parse[1]), float(parse[2]), float(parse[3]), 1)
+	elif parse[0] == "lookat":
+		# lookat( parse )
+		print "need to do lookat"
+	elif parse[0] == "rotatex":
+		rotatex( parse )
+	elif parse[0] == "rotatey":
+		rotatey( parse )
+	elif parse[0] == "rotatez":
+		rotatez( parse )
+	elif parse[0] == "loadmv":
+		loadmv( parse )
 	line = fread.readline()
 
 lightSource = Vector(0,0,0)
-cameraPos = Vector(0,0,100)
+cameraPos = Vector(0,0,10)
 for x in range(width):
 		#print x
 		for y in range(height):

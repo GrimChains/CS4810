@@ -20,3 +20,8 @@ python ./hw2.py hw2depth.txt
 python ./hw2.py hw2culling.txt
 python ./hw2.py hw2lookat.txt
 python ./hw2.py hw2translate.txt
+python ./hw2.py hw2scalec.txt
+python ./hw2.py hw2bigtris.txt
+python ./hw2.py hw2rotatex.txt
+python ./hw2.py hw2loadmv.txt
+python ./hw2.py hw2multmv.txt
