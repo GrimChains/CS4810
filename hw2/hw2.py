@@ -121,7 +121,7 @@ def testRay(ray, objects, ignore=None):
 def trace(ray, objects, light, maxRecur):
 		if maxRecur < 0:
 				return (0,0,0)
-		intersect = testRay(ray, objects)              
+		intersect = testRay(ray, objects) 
 		if intersect.d == -1:
 				#col = Vector(AMBIENT,AMBIENT,AMBIENT)
 				col = Vector(-1, -1, -1)
@@ -134,6 +134,17 @@ def trace(ray, objects, light, maxRecur):
 						col = intersect.obj.col * max(intersect.n.normal().dot((light - intersect.p).normal()*lightIntensity), AMBIENT)
 				else:
 						col = intersect.obj.col * AMBIENT
+		tx = (intersect.p.x - width/2)/(width/2)
+		ty = (intersect.p.y - height/2)/(height/2)
+		#if intersect.p.x != 0 and intersect.p.y != 0 and intersect.p.z != 0:
+		#if intersect.d != -1:
+		#	print clipplane
+		#	print intersect.p.x
+		#	print intersect.p.y
+		#	print intersect.p.z
+		#print intersect.p.x * clipplane[0] + intersect.p.y * clipplane[1] + intersect.p.z * clipplane[2] + clipplane[3]
+		if clip and tx * clipplane[0] + ty * clipplane[1] + intersect.p.z * clipplane[2] + clipplane[3] <= 0:
+			col = Vector(-1, -1, -1)
 		return col
 	   
 def gammaCorrection(color,factor):
@@ -160,9 +171,9 @@ def trif( parse ):
 		b = Vector(vertex2[0], vertex2[1], vertex2[2])
 		c = Vector(vertex3[0], vertex3[1], vertex3[2])
 		if a.cross(b)[2] > 0:
-			objs.append(Triangle(Vector(vertex1[0], vertex1[1], vertex1[2]), Vector(vertex2[0], vertex2[1], vertex2[2]), Vector(vertex3[0], vertex3[1], vertex3[2]), Vector(color[0], color[1], color[2])))
+			objs.append(Triangle(Vector(vertex1[0]/vertex1[3], vertex1[1]/vertex1[3], vertex1[2]/vertex1[3]), Vector(vertex2[0]/vertex2[3], vertex2[1]/vertex2[3], vertex2[2]/vertex2[3]), Vector(vertex3[0]/vertex3[3], vertex3[1]/vertex3[3], vertex3[2]/vertex3[3]), Vector(color[0], color[1], color[2])))
 	else:
-		objs.append(Triangle(Vector(vertex1[0], vertex1[1], vertex1[2]), Vector(vertex2[0], vertex2[1], vertex2[2]), Vector(vertex3[0], vertex3[1], vertex3[2]), Vector(color[0], color[1], color[2])))
+		objs.append(Triangle(Vector(vertex1[0]/vertex1[3], vertex1[1]/vertex1[3], vertex1[2]/vertex1[3]), Vector(vertex2[0]/vertex2[3], vertex2[1]/vertex2[3], vertex2[2]/vertex2[3]), Vector(vertex3[0]/vertex3[3], vertex3[1]/vertex3[3], vertex3[2]/vertex3[3]), Vector(color[0], color[1], color[2])))
 
 def translate( x, y, z, w ):
 	global vertexList
@@ -266,7 +277,6 @@ def rotatey( parse ):
 		v[1] = (v[1] * (height/2)) + (height/2)
 		v[2] = -v[2]
 
-
 def rotatez( parse ):
 	global vertexList
 	degree = cos(float(parse[1]) * (pi/180))
@@ -311,12 +321,13 @@ def orth( parse ):
 	right = float(parse[2])
 	bottom = float(parse[3])
 	top = float(parse[4])
-	far = float(parse[6])
-	near = 2*float(parse[5]) - far # might have to change this to 2n - f
+	farVal = float(parse[6])
+	nearVal = (2*float(parse[5])) - farVal
+	#near = 2*float(parse[5]) - far # might have to change this to 2n - f
 
 	tx = -(right + left)/(right - left)
 	ty = -(top + bottom)/(top - bottom)
-	tz = -(far + near)/(far - near)
+	tz = -(farVal + nearVal)/(farVal - nearVal)
 
 	for v in vertexList:
 		v[0] = (v[0] - width/2)/(width/2)
@@ -325,15 +336,18 @@ def orth( parse ):
 
 		tmp = copy.deepcopy(v)
 
-		v[0] = tmp[0] * (2/(right-left)) + (right + left)/(right - left) + tmp[3]*tx
-		v[1] = tmp[1] * (2/(top-bottom)) + (top + bottom)/(top - bottom) + tmp[3]*ty
-		v[2] = tmp[2] * (-2/(far-near)) + (far + near)/(far - near) + tmp[3]*tz
+		#v[0] = tmp[0] * (2/(right-left)) + (right + left)/(right - left) + tmp[3]*tx
+		#v[1] = tmp[1] * (2/(top-bottom)) + (top + bottom)/(top - bottom) + tmp[3]*ty
+		#v[2] = tmp[2] * (-2/(farVal-nearVal)) + (farVal + nearVal)/(farVal - nearVal) + tmp[3]*tz
+		
+		v[0] = tmp[0] * (2/(right-left)) + tmp[3]*tx
+		v[1] = tmp[1] * (2/(top-bottom)) + tmp[3]*ty
+		v[2] = tmp[2] * (-2/(farVal-nearVal)) + tmp[3]*tz
 
 
 		v[0] = (v[0]*width/2) + (width/2)
 		v[1] = (v[1]*height/2) + (height/2)
 		v[2] = -v[2]
-		print v
 
 def scalec( parse ):
 
@@ -377,10 +391,6 @@ def scalec( parse ):
 def multmv( parse ):
 
 	global vertexList
-
-	for v in vertexList:
-		print v
-	print "++++++++++"
 	for v in vertexList:
 		v[0] = (v[0] - (width/2))/(width/2)
 		v[1] = (v[1] - (height/2))/(height/2)
@@ -395,9 +405,6 @@ def multmv( parse ):
 		
 		v[0] = (v[0] * (width/2)) + (width/2)
 		v[1] = (v[1] * (height/2)) + (height/2)
-		v[2] = -v[2]
-		print v
-	print "============="
 
 def frustum( parse ):
 	global vertexList
@@ -449,6 +456,8 @@ def frustum( parse ):
 AMBIENT = 1
 GAMMA_CORRECTION = 1/2.2
 
+global viewmodel = [[0, 0, 0, 0,],[0, 0, 0, 0,],[0, 0, 0, 0,],[0, 0, 0, 0,]]
+
 objs = []
 global vertexList
 vertexList = []
@@ -469,15 +478,11 @@ while (line != ""):
 	if parse == []:
 		parse
 	elif parse[0] == "xyz":
-		vertexList.append([(float(parse[1]) * width/2) + width/2, (float(parse[2]) * height/2) + height/2, -float(parse[3]), 1])
-		virgin.append([(float(parse[1]) * width/2) + width/2, (float(parse[2]) * height/2) + height/2, -float(parse[3]), 1])
+		vertexList.append([(float(parse[1]) * width/2) + width/2, (float(parse[2]) * height/2) + height/2, -float(parse[3]), 1, color[0], color[1], color[2]])
+		virgin.append([(float(parse[1]) * width/2) + width/2, (float(parse[2]) * height/2) + height/2, -float(parse[3]), 1, color[0], color[1], color[2]])
 	elif parse[0] == "cull":
 		cull = True
 	elif parse[0] == "trif":
-		print "------------"
-		for v in vertexList:
-			print v
-		print "------------"
 		trif( parse )
 	elif parse[0] == "color":
 		red = 255*float(parse[1])
@@ -507,12 +512,14 @@ while (line != ""):
 		multmv( parse )
 	elif parse[0] == "frustum":
 		frustum( parse )
-	elif parse[0] == "clip":
+	elif parse[0] == "clipplane":
 		clip = True
+		#clipplane = [(float(parse[1]) * width/2) + width/2, (float(parse[2]) * height/2) + height/2, ((float(parse[3]) * height/2) + height/2), (float(parse[4]) * height/2) + height/2]
 		clipplane = [float(parse[1]), float(parse[2]), float(parse[3]), float(parse[4])]
 	line = fread.readline()
-
-lightSource = Vector(10000,10000,10000)
+for v in vertexList:
+	print v
+lightSource = Vector(0,0,10)
 cameraPos = Vector(0,0,10)
 for x in range(width):
 		for y in range(height):
