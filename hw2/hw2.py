@@ -304,8 +304,6 @@ def loadmv( parse ):
 		v[0] = (v[0] - width/2)/(width/2)
 		v[1] = (v[1] - height/2)/(height/2)
 		v[2] = -v[2]
-		print v
-
 
 		tmp = copy.deepcopy(v)
 
@@ -314,16 +312,9 @@ def loadmv( parse ):
 		v[2] = tmp[0]*float(parse[9]) + tmp[1]*float(parse[10]) + tmp[2]*float(parse[11]) + tmp[3]*float(parse[12])
 		v[3] = tmp[0]*float(parse[13]) + tmp[1]*float(parse[14]) + tmp[2]*float(parse[15]) + tmp[3]*float(parse[16])
 		
-		#v[0] = tmp[0]*float(parse[1]) + tmp[1]*float(parse[5]) + tmp[2]*float(parse[9]) + tmp[3]*float(parse[13])
-		#v[1] = tmp[0]*float(parse[2]) + tmp[1]*float(parse[6]) + tmp[2]*float(parse[10]) + tmp[3]*float(parse[14])
-		#v[2] = tmp[0]*float(parse[3]) + tmp[1]*float(parse[7]) + tmp[2]*float(parse[11]) + tmp[3]*float(parse[15])
-		#v[3] = tmp[0]*float(parse[4]) + tmp[1]*float(parse[8]) + tmp[2]*float(parse[12]) + tmp[3]*float(parse[16])
-		print v
-
 		v[0] = (v[0] * (width/2)) + (width/2)
 		v[1] = (v[1] * (height/2)) + (height/2)
 		v[2] = -v[2]
-	print "==========="
 
 def orth( parse ):
 	left = float(parse[1])
@@ -377,21 +368,15 @@ def scalec( parse ):
 		(vertexList[v])[2] = (vertexList[v])[2] + z
 
 def multmv( parse ):
+	print parse
+
 	global vertexList
 
-	#print parse[1] + " " + parse[2] + " " + parse[3] + " " + parse[4]
-	#print parse[5] + " " + parse[6] + " " + parse[7] + " " + parse[8]
-	#print parse[9] + " " + parse[10] + " " + parse[11] + " " + parse[12]
-	#print parse[13] + " " + parse[14] + " " + parse[15] + " " + parse[16]
-	#print "-------------"
-
-	#for v in vertexList:
-	#	print v
-	#print "++++++++++++"
 	for v in vertexList:
-		v[0] = (v[0] - width/2)/(width/2)
-		v[1] = (v[1] - height/2)/(height/2)
-		#v[2] = -v[2]
+		v[0] = (v[0] - (width/2))/(width/2)
+		v[1] = (v[1] - (height/2))/(height/2)
+		v[2] = -v[2]
+		print v
 
 		tmp = copy.deepcopy(v)
 
@@ -399,17 +384,12 @@ def multmv( parse ):
 		v[1] = tmp[0]*float(parse[5]) + tmp[1]*float(parse[6]) + tmp[2]*float(parse[7]) + tmp[3]*float(parse[8])
 		v[2] = tmp[0]*float(parse[9]) + tmp[1]*float(parse[10]) + tmp[2]*float(parse[11]) + tmp[3]*float(parse[12])
 		v[3] = tmp[0]*float(parse[13]) + tmp[1]*float(parse[14]) + tmp[2]*float(parse[15]) + tmp[3]*float(parse[16])
-		
-		#v[0] = tmp[0]*float(parse[1]) + tmp[1]*float(parse[5]) + tmp[2]*float(parse[9]) + tmp[3]*float(parse[13])
-		#v[1] = tmp[0]*float(parse[2]) + tmp[1]*float(parse[6]) + tmp[2]*float(parse[10]) + tmp[3]*float(parse[14])
-		#v[2] = tmp[0]*float(parse[3]) + tmp[1]*float(parse[7]) + tmp[2]*float(parse[11]) + tmp[3]*float(parse[15])
-		#v[3] = tmp[0]*float(parse[4]) + tmp[1]*float(parse[8]) + tmp[2]*float(parse[12]) + tmp[3]*float(parse[16])
-
-		v[0] = (v[0] * width/2)+(width/2)
-		v[1] = (v[1] * height/2)+(height/2)
-		#v[2] = -v[2]
 		print v
-	print "==========="
+		
+		v[0] = (v[0] * (width/2)) + (width/2)
+		v[1] = (v[1] * (height/2)) + (height/2)
+		v[2] = -v[2]
+	print "============="
 
 objs = []
 global vertexList
@@ -442,7 +422,7 @@ while (line != ""):
 		blue = 255*float(parse[3])
 		color = (red, green, blue)
 	elif parse[0] == "translate":
-		translate( (float(parse[1]) * width/2), -(float(parse[2]) * height/2), -float(parse[3]), 1 ) 
+		translate( (float(parse[1]) * width/2), (float(parse[2]) * height/2), -float(parse[3]), 1 ) 
 	elif parse[0] == "scale":
 		#scale( (float(parse[1]) * width/2), -(float(parse[2]) * height/2), -float(parse[3]), 1 )
 		scale( float(parse[1]), float(parse[2]), float(parse[3]), 1)
@@ -455,9 +435,6 @@ while (line != ""):
 	elif parse[0] == "rotatez":
 		rotatez( parse )
 	elif parse[0] == "loadmv":
-		for v in vertexList:
-			print v
-		print "----------"
 		loadmv( parse )
 	elif parse[0] == "ortho":
 		orth( parse )
@@ -470,26 +447,8 @@ while (line != ""):
 lightSource = Vector(0,0,0)
 cameraPos = Vector(0,0,10)
 for x in range(width):
-		#print x
 		for y in range(height):
-				#ray = Ray( cameraPos, (Vector(x/12.0-5,y/12.0-5,0)-cameraPos).normal())
 				ray = Ray( cameraPos, (Vector(x,y,0)-cameraPos).normal())
 				col = trace(ray, objs, lightSource, 10)
 				img.putpixel((x,y),gammaCorrection(col,GAMMA_CORRECTION))
-img.save(fileName)	
-
-
-
-#objs = []
-#objs.append(Plane( Vector(0,0,-14), Vector(0,0,1), Vector(255,255,255)))
-#objs.append(Triangle(Vector(10, -10, 1.5), Vector(10, 10, -0.5), Vector(-10, -10, -1.5), Vector(255, 0, 0)))
-#lightSource = Vector(0,0,10)
-#img = Image.new("RGB",(120,120))
-#cameraPos = Vector(0,0,100)
-#for x in range(120):
-#		print x
-#		for y in range(120):
-#				ray = Ray( cameraPos, (Vector(x/12.0-5,y/12.0-5,0)-cameraPos).normal())
-#				col = trace(ray, objs, lightSource, 10)
-#				img.putpixel((x,119-y),gammaCorrection(col,GAMMA_CORRECTION))
-#img.save("trace.bmp","BMP")
+img.save(fileName)
