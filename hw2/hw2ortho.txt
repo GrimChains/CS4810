@@ -1,0 +1,6 @@
+png 120 120 hw2ortho.png
+xyz 10 20 0
+xyz 100 200 -10
+ortho 5 105 15 205 -20 10
+xyz 50 50 20
+trif 1 2 3

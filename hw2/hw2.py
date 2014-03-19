@@ -1,6 +1,7 @@
 from math import sqrt, pow, pi, cos, sin
 import Image
 import sys
+import copy
  
 class Vector( object ):
 	   
@@ -144,6 +145,7 @@ AMBIENT = 1
 GAMMA_CORRECTION = 1/2.2
 
 def trif( parse ):
+	global vertexList
 	if int(parse[1]) < 0 :
 		vertex1 = vertexList[len(vertexList) + int(parse[1])]
 	else :
@@ -166,13 +168,14 @@ def trif( parse ):
 		objs.append(Triangle(Vector(vertex1[0], vertex1[1], vertex1[2]), Vector(vertex2[0], vertex2[1], vertex2[2]), Vector(vertex3[0], vertex3[1], vertex3[2]), Vector(color[0], color[1], color[2])))
 
 def translate( x, y, z, w ):
+	global vertexList
 	for v in range(0, len(vertexList)):
 		(vertexList[v])[0] = (vertexList[v])[0] + x
 		(vertexList[v])[1] = (vertexList[v])[1] + y
 		(vertexList[v])[2] = (vertexList[v])[2] + z
-		(vertexList[v])[3] = (vertexList[v])[3]
 
 def scale( x, y, z, w ):
+	global vertexList
 	for v in range(0, len(vertexList)):
 		# Translate back into relative form
 		(vertexList[v])[0] = ((vertexList[v])[0] - width/2)/(width/2)
@@ -188,7 +191,8 @@ def scale( x, y, z, w ):
 		(vertexList[v])[1] = ((vertexList[v])[1] * height/2)+(height/2)
 
 def lookat( parse ):
-	print parse
+	global vertexList
+	vertexList = copy.deepcopy(virgin)
 	if int(parse[1]) < 0 :
 		eye = vertexList[len(vertexList) + int(parse[1])]
 	else :
@@ -197,29 +201,80 @@ def lookat( parse ):
 		center = vertexList[len(vertexList) + int(parse[2])]
 	else :
 		center = vertexList[int(parse[2]) - 1]
-	print eye
-	eye = Vector(float(eye[0]), float(eye[0]), float(eye[0]))
-	center = Vector(float(center[0]), float(center[0]), float(center[0]))
-	up = Vector(float(parse[3]), float(parse[4]), float(parse[4]))
+	eye = Vector(float(eye[0]), float(eye[1]), float(eye[2]))
+	center = Vector(float(center[0]), float(center[1]), float(center[2]))
+	up = Vector(float(parse[3]), float(parse[4]), float(parse[5]))
+	up = up.normal()
+
+	eye.x = (eye.x - width/2)/(width/2)
+	eye.y = (eye.y - height/2)/(height/2)
+	eye.z = -eye.z
+	center.x = (center.x - width/2)/(width/2)
+	center.y = (center.y - height/2)/(height/2)
+	center.z = -center.z
 	
-	zaxis = Vector(center.x - eye.x, center.y - eye.y, center.z - eye.z)
-	zaxis.normal()
-	tmp = up.cross(zaxis)
-	xaxis = Vector(tmp[0], tmp[1], tmp[2])
-	xaxis.normal()
-	tmp = zaxis.cross(xaxis)
-	yaxis = Vector(tmp[0], tmp[1], tmp[2])
-	print tmp
-	print xaxis.x
-	print xaxis.y
-	print xaxis.z
-	print yaxis.x
-	print yaxis.y
-	print yaxis.z
-	print zaxis.x
-	print zaxis.y
-	print zaxis.z
-	print "========"
+
+	Z = Vector(eye.x - center.x, eye.y - center.y, eye.z - center.z)
+	Z = Z.normal()
+
+	X = up.cross(Z)
+	X = Vector(X[0], X[1], X[2])
+	X = X.normal()
+
+	Y = Z.cross(X)
+	Y = Vector(Y[0], Y[1], Y[2])
+
+	#print eye.x
+	#print eye.y
+	#print eye.z
+	#print "----"
+	#print X.x
+	#print X.y
+	#print X.z
+	#print "----"
+	#print Y.x
+	#print Y.y
+	#print Y.z
+	#print "----"
+	#print Z.x
+	#print Z.y
+	#print Z.z
+	#print "===="
+	for v in vertexList:
+		v[0] = (v[0] - width/2)/(width/2)
+		v[1] = (v[1] - height/2)/(height/2)
+		v[2] = -v[2]
+
+		#L:
+		#X.x Y.x Z.x -eye.x
+		#X.y Y.y Z.y -eye.y
+		#X.z Y.z Z.z -eye.z
+		#0   0   0   1
+		
+		#L:
+		#X.x X.y X.z -eye*X
+		#Y.x Y.y Y.z -eye*Y
+		#Z.x Z.y Z.z -eye*Z
+		#0   0   0   1
+		eye = eye * -1
+		v[0] = X.x*v[0] + X.y*v[1] + X.z*v[2] + v[3]*eye.dot(X)
+		v[1] = Y.x*v[0] + Y.y*v[1] + Y.z*v[2] + v[3]*eye.dot(Y)
+		v[2] = Z.x*v[0] + Z.y*v[1] + Z.z*v[2] + v[3]*eye.dot(Z)
+
+
+		#v[0] = X.x*v[0] + X.y*v[1] + X.z*v[2] + v[3]*eye.dot(X)
+		#v[1] = X.x*v[0] + Y.y*v[1] + Y.z*v[2] + v[3]*eye.dot(Y)
+		#v[2] = X.x*v[0] + Z.y*v[1] + Z.z*v[2] + v[3]*eye.dot(Z)
+
+		v[0] = (v[0] * (width/2)) + (width/2)
+		v[1] = (v[1] * (height/2)) + (height/2)
+		v[2] = -v[2]
+
+		print v
+	#eye.x = (eye.x * width/2) + (width/2)
+	#eye.y = (eye.y * height/2) + (height/2)
+	#eye.z = -eye.z
+	print "+++++++++++++++++++++"
 
 def rotatex( parse ):
 	degree = -cos(float(parse[1]) * (pi/180))
@@ -239,22 +294,88 @@ def rotatez( parse ):
 		v[0] = cos(degree)*v[0] + sin(degree)*v[1]
 		v[1] = -sin(degree)*v[0] + cos(degree)*v[1]
 
-def loadmv( pase ):
-	for v in vertexList:
-		#v[0] = (v[0] - width/2)/(width/2)
-		#v[1] = (v[1] - height/2)/(height/2)
-		#v[2] = -v[2]
+def loadmv( parse ):
 
-		v[0] = v[0]*float(parse[1]) + v[1]*float(parse[5]) + v[2]*float(parse[9]) + float(parse[13])
-		v[1] = v[0]*float(parse[2]) + v[1]*float(parse[6]) + v[2]*float(parse[10]) + float(parse[14])
-		v[2] = v[0]*float(parse[3]) + v[1]*float(parse[7]) + v[2]*float(parse[11]) + float(parse[15])
-		
-		#v[0] = (v[0] * width/2)+(width/2)
-		#v[1] = (v[1] * height/2)+(height/2)
-		#v[2] = -v[2]
+	global vertexList
+	vertexList = copy.deepcopy(virgin)
+
+	for v in vertexList:
+		v[0] = (v[0] - width/2)/(width/2)
+		v[1] = (v[1] - height/2)/(height/2)
+		v[2] = -v[2]
+
+
+		v[0] = v[0]*float(parse[1]) + v[1]*float(parse[2]) + v[2]*float(parse[3]) + v[3]*float(parse[4])
+		v[1] = v[0]*float(parse[5]) + v[1]*float(parse[6]) + v[2]*float(parse[7]) + v[3]*float(parse[8])
+		v[2] = v[0]*float(parse[9]) + v[1]*float(parse[10]) + v[2]*float(parse[11]) + v[3]*float(parse[12])
+		v[3] = v[0]*float(parse[13]) + v[1]*float(parse[14]) + v[2]*float(parse[15]) + v[3]*float(parse[16])
+
+		v[0] = (v[0] * (width/2)) + (width/2)
+		v[1] = (v[1] * (height/2)) + (height/2)
+		v[2] = -v[2]
+
+	#for v in vertexList:
+	#	print v
+	#print "=========="
+
+def orth( parse ):
+	left = float(parse[1])
+	right = float(parse[2])
+	bottom = float(parse[3])
+	top = float(parse[4])
+	far = float(parse[6])
+	near = 2*float(parse[5]) - far # might have to change this to 2n - f
+	for v in vertexList:
+		v[0] = v[0] * (2/(right-left)) + (right + left)/(right - left)
+		v[1] = v[1] * (2/(top-bottom)) + (top + bottom)/(top - bottom)
+		v[2] = v[2] * (-2/(far-near)) + (far + near)/(far - near)
+
+def scalec( parse ):
+
+	global vertexList
+
+	if int(parse[4]) < 0 :
+		opoint = copy.deepcopy(vertexList[len(vertexList) + int(parse[4])])
+	else :
+		opoint = copy.deepcopy(vertexList[int(parse[4]) - 1])
+	x = float(parse[1])
+	y = float(parse[2])
+	z = float(parse[3])
+	# Scaling
+	for v in vertexList:
+		# Translate back into relative form
+		v[0] = (v[0] - width/2)/(width/2)
+		v[1] = (v[1] - height/2)/(height/2)
+
+		# Scale
+		v[0] = v[0] * x
+		v[1] = v[1] * y
+		v[2] = v[2] * z
+
+		# Translate back into xyz
+		v[0] = (v[0] * width/2)+(width/2)
+		v[1] = (v[1] * height/2)+(height/2)
+
+	if int(parse[4]) < 0 :
+		dpoint = vertexList[len(vertexList) + int(parse[4])]
+	else :
+		dpoint = vertexList[int(parse[4]) - 1]
+	print opoint
+	print dpoint
+	# Shifting back into place
+	x = opoint[0] - dpoint[0]
+	y = opoint[1] - dpoint[1]
+	z = opoint[2] - dpoint[2]
+	for v in range(0, len(vertexList)):
+		(vertexList[v])[0] = (vertexList[v])[0] + x
+		(vertexList[v])[1] = (vertexList[v])[1] + y
+		(vertexList[v])[2] = (vertexList[v])[2] + z
+
 
 objs = []
+global vertexList
 vertexList = []
+virgin = []
 color = (255, 255, 255)
 cull = False
 fread = open(sys.argv[1], 'r')
@@ -271,6 +392,7 @@ while (line != ""):
 		parse
 	elif parse[0] == "xyz":
 		vertexList.append([(float(parse[1]) * width/2) + width/2, -(float(parse[2]) * height/2) + height/2, -float(parse[3]), 1])
+		virgin.append([(float(parse[1]) * width/2) + width/2, -(float(parse[2]) * height/2) + height/2, -float(parse[3]), 1])
 	elif parse[0] == "cull":
 		cull = True
 	elif parse[0] == "trif":
@@ -286,8 +408,7 @@ while (line != ""):
 		#scale( (float(parse[1]) * width/2), -(float(parse[2]) * height/2), -float(parse[3]), 1 )
 		scale( float(parse[1]), float(parse[2]), float(parse[3]), 1)
 	elif parse[0] == "lookat":
-		# lookat( parse )
-		print "need to do lookat"
+		lookat( parse )
 	elif parse[0] == "rotatex":
 		rotatex( parse )
 	elif parse[0] == "rotatey":
@@ -296,6 +417,10 @@ while (line != ""):
 		rotatez( parse )
 	elif parse[0] == "loadmv":
 		loadmv( parse )
+	elif parse[0] == "ortho":
+		orth( parse )
+	elif parse[0] == "scalec":
+		scalec( parse )
 	line = fread.readline()
 
 lightSource = Vector(0,0,0)
