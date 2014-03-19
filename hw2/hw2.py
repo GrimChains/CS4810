@@ -257,24 +257,25 @@ def lookat( parse ):
 		#Z.x Z.y Z.z -eye*Z
 		#0   0   0   1
 		eye = eye * -1
-		v[0] = X.x*v[0] + X.y*v[1] + X.z*v[2] + v[3]*eye.dot(X)
-		v[1] = Y.x*v[0] + Y.y*v[1] + Y.z*v[2] + v[3]*eye.dot(Y)
-		v[2] = Z.x*v[0] + Z.y*v[1] + Z.z*v[2] + v[3]*eye.dot(Z)
+		tmp = copy.deepcopy(v)
+		v[0] = X.x*tmp[0] + X.y*tmp[1] + X.z*tmp[2] + tmp[3]*eye.dot(X)
+		v[1] = Y.x*tmp[0] + Y.y*tmp[1] + Y.z*tmp[2] + tmp[3]*eye.dot(Y)
+		v[2] = Z.x*tmp[0] + Z.y*tmp[1] + Z.z*tmp[2] + tmp[3]*eye.dot(Z)
 
 
-		#v[0] = X.x*v[0] + X.y*v[1] + X.z*v[2] + v[3]*eye.dot(X)
-		#v[1] = X.x*v[0] + Y.y*v[1] + Y.z*v[2] + v[3]*eye.dot(Y)
-		#v[2] = X.x*v[0] + Z.y*v[1] + Z.z*v[2] + v[3]*eye.dot(Z)
+		#v[0] = X.x*tmp[0] + X.y*tmp[1] + X.z*tmp[2] + tmp[3]*eye.dot(X)
+		#v[1] = X.x*tmp[0] + Y.y*tmp[1] + Y.z*tmp[2] + tmp[3]*eye.dot(Y)
+		#v[2] = X.x*tmp[0] + Z.y*tmp[1] + Z.z*tmp[2] + tmp[3]*eye.dot(Z)
 
 		v[0] = (v[0] * (width/2)) + (width/2)
 		v[1] = (v[1] * (height/2)) + (height/2)
 		v[2] = -v[2]
 
-		print v
+		#print v
 	#eye.x = (eye.x * width/2) + (width/2)
 	#eye.y = (eye.y * height/2) + (height/2)
 	#eye.z = -eye.z
-	print "+++++++++++++++++++++"
+	#print "+++++++++++++++++++++"
 
 def rotatex( parse ):
 	degree = -cos(float(parse[1]) * (pi/180))
@@ -303,20 +304,26 @@ def loadmv( parse ):
 		v[0] = (v[0] - width/2)/(width/2)
 		v[1] = (v[1] - height/2)/(height/2)
 		v[2] = -v[2]
+		print v
 
 
-		v[0] = v[0]*float(parse[1]) + v[1]*float(parse[2]) + v[2]*float(parse[3]) + v[3]*float(parse[4])
-		v[1] = v[0]*float(parse[5]) + v[1]*float(parse[6]) + v[2]*float(parse[7]) + v[3]*float(parse[8])
-		v[2] = v[0]*float(parse[9]) + v[1]*float(parse[10]) + v[2]*float(parse[11]) + v[3]*float(parse[12])
-		v[3] = v[0]*float(parse[13]) + v[1]*float(parse[14]) + v[2]*float(parse[15]) + v[3]*float(parse[16])
+		tmp = copy.deepcopy(v)
+
+		v[0] = tmp[0]*float(parse[1]) + tmp[1]*float(parse[2]) + tmp[2]*float(parse[3]) + tmp[3]*float(parse[4])
+		v[1] = tmp[0]*float(parse[5]) + tmp[1]*float(parse[6]) + tmp[2]*float(parse[7]) + tmp[3]*float(parse[8])
+		v[2] = tmp[0]*float(parse[9]) + tmp[1]*float(parse[10]) + tmp[2]*float(parse[11]) + tmp[3]*float(parse[12])
+		v[3] = tmp[0]*float(parse[13]) + tmp[1]*float(parse[14]) + tmp[2]*float(parse[15]) + tmp[3]*float(parse[16])
+		
+		#v[0] = tmp[0]*float(parse[1]) + tmp[1]*float(parse[5]) + tmp[2]*float(parse[9]) + tmp[3]*float(parse[13])
+		#v[1] = tmp[0]*float(parse[2]) + tmp[1]*float(parse[6]) + tmp[2]*float(parse[10]) + tmp[3]*float(parse[14])
+		#v[2] = tmp[0]*float(parse[3]) + tmp[1]*float(parse[7]) + tmp[2]*float(parse[11]) + tmp[3]*float(parse[15])
+		#v[3] = tmp[0]*float(parse[4]) + tmp[1]*float(parse[8]) + tmp[2]*float(parse[12]) + tmp[3]*float(parse[16])
+		print v
 
 		v[0] = (v[0] * (width/2)) + (width/2)
 		v[1] = (v[1] * (height/2)) + (height/2)
 		v[2] = -v[2]
-
-	#for v in vertexList:
-	#	print v
-	#print "=========="
+	print "==========="
 
 def orth( parse ):
 	left = float(parse[1])
@@ -360,8 +367,6 @@ def scalec( parse ):
 		dpoint = vertexList[len(vertexList) + int(parse[4])]
 	else :
 		dpoint = vertexList[int(parse[4]) - 1]
-	print opoint
-	print dpoint
 	# Shifting back into place
 	x = opoint[0] - dpoint[0]
 	y = opoint[1] - dpoint[1]
@@ -371,6 +376,40 @@ def scalec( parse ):
 		(vertexList[v])[1] = (vertexList[v])[1] + y
 		(vertexList[v])[2] = (vertexList[v])[2] + z
 
+def multmv( parse ):
+	global vertexList
+
+	#print parse[1] + " " + parse[2] + " " + parse[3] + " " + parse[4]
+	#print parse[5] + " " + parse[6] + " " + parse[7] + " " + parse[8]
+	#print parse[9] + " " + parse[10] + " " + parse[11] + " " + parse[12]
+	#print parse[13] + " " + parse[14] + " " + parse[15] + " " + parse[16]
+	#print "-------------"
+
+	#for v in vertexList:
+	#	print v
+	#print "++++++++++++"
+	for v in vertexList:
+		v[0] = (v[0] - width/2)/(width/2)
+		v[1] = (v[1] - height/2)/(height/2)
+		#v[2] = -v[2]
+
+		tmp = copy.deepcopy(v)
+
+		v[0] = tmp[0]*float(parse[1]) + tmp[1]*float(parse[2]) + tmp[2]*float(parse[3]) + tmp[3]*float(parse[4])
+		v[1] = tmp[0]*float(parse[5]) + tmp[1]*float(parse[6]) + tmp[2]*float(parse[7]) + tmp[3]*float(parse[8])
+		v[2] = tmp[0]*float(parse[9]) + tmp[1]*float(parse[10]) + tmp[2]*float(parse[11]) + tmp[3]*float(parse[12])
+		v[3] = tmp[0]*float(parse[13]) + tmp[1]*float(parse[14]) + tmp[2]*float(parse[15]) + tmp[3]*float(parse[16])
+		
+		#v[0] = tmp[0]*float(parse[1]) + tmp[1]*float(parse[5]) + tmp[2]*float(parse[9]) + tmp[3]*float(parse[13])
+		#v[1] = tmp[0]*float(parse[2]) + tmp[1]*float(parse[6]) + tmp[2]*float(parse[10]) + tmp[3]*float(parse[14])
+		#v[2] = tmp[0]*float(parse[3]) + tmp[1]*float(parse[7]) + tmp[2]*float(parse[11]) + tmp[3]*float(parse[15])
+		#v[3] = tmp[0]*float(parse[4]) + tmp[1]*float(parse[8]) + tmp[2]*float(parse[12]) + tmp[3]*float(parse[16])
+
+		v[0] = (v[0] * width/2)+(width/2)
+		v[1] = (v[1] * height/2)+(height/2)
+		#v[2] = -v[2]
+		print v
+	print "==========="
 
 objs = []
 global vertexList
@@ -391,8 +430,8 @@ while (line != ""):
 	if parse == []:
 		parse
 	elif parse[0] == "xyz":
-		vertexList.append([(float(parse[1]) * width/2) + width/2, -(float(parse[2]) * height/2) + height/2, -float(parse[3]), 1])
-		virgin.append([(float(parse[1]) * width/2) + width/2, -(float(parse[2]) * height/2) + height/2, -float(parse[3]), 1])
+		vertexList.append([(float(parse[1]) * width/2) + width/2, (float(parse[2]) * height/2) + height/2, -float(parse[3]), 1])
+		virgin.append([(float(parse[1]) * width/2) + width/2, (float(parse[2]) * height/2) + height/2, -float(parse[3]), 1])
 	elif parse[0] == "cull":
 		cull = True
 	elif parse[0] == "trif":
@@ -416,11 +455,16 @@ while (line != ""):
 	elif parse[0] == "rotatez":
 		rotatez( parse )
 	elif parse[0] == "loadmv":
+		for v in vertexList:
+			print v
+		print "----------"
 		loadmv( parse )
 	elif parse[0] == "ortho":
 		orth( parse )
 	elif parse[0] == "scalec":
 		scalec( parse )
+	elif parse[0] == "multmv":
+		multmv( parse )
 	line = fread.readline()
 
 lightSource = Vector(0,0,0)
@@ -431,7 +475,7 @@ for x in range(width):
 				#ray = Ray( cameraPos, (Vector(x/12.0-5,y/12.0-5,0)-cameraPos).normal())
 				ray = Ray( cameraPos, (Vector(x,y,0)-cameraPos).normal())
 				col = trace(ray, objs, lightSource, 10)
-				img.putpixel((x,(width-1)-y),gammaCorrection(col,GAMMA_CORRECTION))
+				img.putpixel((x,y),gammaCorrection(col,GAMMA_CORRECTION))
 img.save(fileName)	
 
 
