@@ -154,6 +154,8 @@ def gammaCorrection(color,factor):
 
 def trif( parse ):
 	global vertexList
+
+	applyviewmodel()
 	if int(parse[1]) < 0 :
 		vertex1 = vertexList[len(vertexList) + int(parse[1])]
 	else :
@@ -184,19 +186,25 @@ def translate( x, y, z, w ):
 
 def scale( x, y, z, w ):
 	global vertexList
-	for v in range(0, len(vertexList)):
-		# Translate back into relative form
-		(vertexList[v])[0] = ((vertexList[v])[0] - width/2)/(width/2)
-		(vertexList[v])[1] = ((vertexList[v])[1] - height/2)/(height/2)
+	global viewmodel
+	x = float(parse[1])
+	y = float(parse[2])
+	z = float(parse[3])
+	# Scaling
 
-		# Scale
-		(vertexList[v])[0] = (vertexList[v])[0] * x
-		(vertexList[v])[1] = (vertexList[v])[1] * y
-		(vertexList[v])[2] = (vertexList[v])[2] * z
-
-		# Translate back into xyz
-		(vertexList[v])[0] = ((vertexList[v])[0] * width/2)+(width/2)
-		(vertexList[v])[1] = ((vertexList[v])[1] * height/2)+(height/2)
+	tmp = copy.deepcopy(viewmodel)
+	viewmodel[0][0] = tmp[0][0]*x
+	viewmodel[1][0] = tmp[1][0]*x
+	viewmodel[2][0] = tmp[2][0]*x
+	viewmodel[3][0] = tmp[3][0]*x
+	viewmodel[0][1] = tmp[0][1]*y
+	viewmodel[1][1] = tmp[1][1]*y
+	viewmodel[2][1] = tmp[2][1]*y
+	viewmodel[3][1] = tmp[3][1]*y
+	viewmodel[0][2] = tmp[0][2]*z
+	viewmodel[1][2] = tmp[1][2]*z
+	viewmodel[2][2] = tmp[2][2]*z
+	viewmodel[3][2] = tmp[3][2]*z
 
 def lookat( parse ):
 	global vertexList
@@ -352,7 +360,7 @@ def orth( parse ):
 def scalec( parse ):
 
 	global vertexList
-
+	global viewmodel
 	if int(parse[4]) < 0 :
 		opoint = copy.deepcopy(vertexList[len(vertexList) + int(parse[4])])
 	else :
@@ -361,6 +369,21 @@ def scalec( parse ):
 	y = float(parse[2])
 	z = float(parse[3])
 	# Scaling
+
+	tmp = copy.deepcopy(viewmodel)
+	viewmodel[0][0] = tmp[0][0]*x
+	viewmodel[1][0] = tmp[1][0]*x
+	viewmodel[2][0] = tmp[2][0]*x
+	viewmodel[3][0] = tmp[3][0]*x
+	viewmodel[0][1] = tmp[0][1]*y
+	viewmodel[1][1] = tmp[1][1]*y
+	viewmodel[2][1] = tmp[2][1]*y
+	viewmodel[3][1] = tmp[3][1]*y
+	viewmodel[0][2] = tmp[0][2]*z
+	viewmodel[1][2] = tmp[1][2]*z
+	viewmodel[2][2] = tmp[2][2]*z
+	viewmodel[3][2] = tmp[3][2]*z
+
 	for v in vertexList:
 		# Translate back into relative form
 		v[0] = (v[0] - width/2)/(width/2)
@@ -408,6 +431,7 @@ def multmv( parse ):
 
 def frustum( parse ):
 	global vertexList
+	global modelview
 	left = float(parse[1])
 	right = float(parse[2])
 	bottom = float(parse[3])
@@ -436,16 +460,13 @@ def frustum( parse ):
 		v[2] = -v[2]
 
 		tmp = copy.deepcopy(v)
-		#print tmp
 
 		v[0] = tmp[0]*t1 + tmp[2]*a
 		v[1] = tmp[1]*t2 + tmp[2]*b
 		v[2] = tmp[2]*c + tmp[3]*d
 		v[3] = v[2]*-1
 
-		#v[0] = v[0]/v[3]
-		#v[1] = v[1]/v[3]
-		#v[2] = v[2]/v[3]
+		asdf
 
 		v[0] = (v[0]*width/2) + (width/2)
 		v[1] = (v[1]*height/2) + (height/2)
@@ -453,10 +474,33 @@ def frustum( parse ):
 		print v
 	print "=============="
 
+def applyviewmodel():
+	global vertexList
+	global viewmodel
+
+	for v in vertexList:
+		v[0] = (v[0] - width/2)/(width/2)
+		v[1] = (v[1] - height/2)/(height/2)
+		v[2] = -v[2]
+
+		tmp = copy.deepcopy(v)
+
+		v[0] = tmp[0]*viewmodel[0][0] + tmp[1]*viewmodel[1][0] + tmp[2]*viewmodel[2][0] + tmp[3]*viewmodel[3][0]
+		v[1] = tmp[0]*viewmodel[0][1] + tmp[1]*viewmodel[1][1] + tmp[2]*viewmodel[2][1] + tmp[3]*viewmodel[3][1]
+		v[2] = tmp[0]*viewmodel[0][2] + tmp[1]*viewmodel[1][2] + tmp[2]*viewmodel[2][2] + tmp[3]*viewmodel[3][2]
+		v[3] = tmp[0]*viewmodel[0][3] + tmp[1]*viewmodel[1][3] + tmp[2]*viewmodel[2][3] + tmp[3]*viewmodel[3][3]
+
+		v[0] = (v[0]*width/2) + (width/2)
+		v[1] = (v[1]*height/2) + (height/2)
+		v[2] = -v[2]
+
+
+
 AMBIENT = 1
 GAMMA_CORRECTION = 1/2.2
 
-global viewmodel = [[0, 0, 0, 0,],[0, 0, 0, 0,],[0, 0, 0, 0,],[0, 0, 0, 0,]]
+global viewmodel
+viewmodel= [[1, 0, 0, 0,],[0, 1, 0, 0,],[0, 0, 1, 0,],[0, 0, 0, 1,]]
 
 objs = []
 global vertexList
