@@ -40,6 +40,26 @@ def triangleNormal(x1, x2, x3, y1, y2, y3, z1, z2, z3) :
 		norm = Vector((U.y * V.z) - (U.z * V.y), (U.z * V.x) - (U.x * V.z), (U.x * V.y) - (U.y * V.x))
 		return norm
 
+def mult4x4(a, b):
+	tmp = copy.deepcopy(a)
+	a[0][0] = tmp[0][0] * b[0][0] + tmp[1][0] * b[0][1] + tmp[2][0] * b[0][2] + tmp[3][0] * b[0][3]
+	a[1][0] = tmp[0][0] * b[1][0] + tmp[1][0] * b[1][1] + tmp[2][0] * b[1][2] + tmp[3][0] * b[1][3]
+	a[2][0] = tmp[0][0] * b[2][0] + tmp[1][0] * b[2][1] + tmp[2][0] * b[2][2] + tmp[3][0] * b[2][3]
+	a[3][0] = tmp[0][0] * b[3][0] + tmp[1][0] * b[3][1] + tmp[2][0] * b[3][2] + tmp[3][0] * b[3][3]
+	a[0][1] = tmp[0][1] * b[0][0] + tmp[1][1] * b[0][1] + tmp[2][1] * b[0][2] + tmp[3][1] * b[0][3]
+	a[1][1] = tmp[0][1] * b[1][0] + tmp[1][1] * b[1][1] + tmp[2][1] * b[1][2] + tmp[3][1] * b[1][3]
+	a[2][1] = tmp[0][1] * b[2][0] + tmp[1][1] * b[2][1] + tmp[2][1] * b[2][2] + tmp[3][1] * b[2][3]
+	a[3][1] = tmp[0][1] * b[3][0] + tmp[1][1] * b[3][1] + tmp[2][1] * b[3][2] + tmp[3][1] * b[3][3]
+	a[0][2] = tmp[0][2] * b[0][0] + tmp[1][2] * b[0][1] + tmp[2][2] * b[0][2] + tmp[3][2] * b[0][3]
+	a[1][2] = tmp[0][2] * b[1][0] + tmp[1][2] * b[1][1] + tmp[2][2] * b[1][2] + tmp[3][2] * b[1][3]
+	a[2][2] = tmp[0][2] * b[2][0] + tmp[1][2] * b[2][1] + tmp[2][2] * b[2][2] + tmp[3][2] * b[2][3]
+	a[3][2] = tmp[0][2] * b[3][0] + tmp[1][2] * b[3][1] + tmp[2][2] * b[3][2] + tmp[3][2] * b[3][3]
+	a[0][3] = tmp[0][3] * b[0][0] + tmp[1][3] * b[0][1] + tmp[2][3] * b[0][2] + tmp[3][3] * b[0][3]
+	a[1][3] = tmp[0][3] * b[1][0] + tmp[1][3] * b[1][1] + tmp[2][3] * b[1][2] + tmp[3][3] * b[1][3]
+	a[2][3] = tmp[0][3] * b[2][0] + tmp[1][3] * b[2][1] + tmp[2][3] * b[2][2] + tmp[3][3] * b[2][3]
+	a[3][3] = tmp[0][3] * b[3][0] + tmp[1][3] * b[3][1] + tmp[2][3] * b[3][2] + tmp[3][3] * b[3][3]
+	return a
+
 class Triangle( object ):
 
 		def __init__(self, point1, point2, point3, color) :
@@ -177,37 +197,26 @@ def trif( parse ):
 	else:
 		objs.append(Triangle(Vector(vertex1[0]/vertex1[3], vertex1[1]/vertex1[3], vertex1[2]/vertex1[3]), Vector(vertex2[0]/vertex2[3], vertex2[1]/vertex2[3], vertex2[2]/vertex2[3]), Vector(vertex3[0]/vertex3[3], vertex3[1]/vertex3[3], vertex3[2]/vertex3[3]), Vector(color[0], color[1], color[2])))
 
-def translate( x, y, z, w ):
-	global vertexList
-	for v in range(0, len(vertexList)):
-		(vertexList[v])[0] = (vertexList[v])[0] + x
-		(vertexList[v])[1] = (vertexList[v])[1] + y
-		(vertexList[v])[2] = (vertexList[v])[2] + z
+def translate( x, y, z ):
+	global viewmodel
+	tmp = [[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [x, y, z, 1]]
+	viewmodel = mult4x4(viewmodel, tmp)
 
-def scale( x, y, z, w ):
-	global vertexList
+def scale( x, y, z ):
 	global viewmodel
 	x = float(parse[1])
 	y = float(parse[2])
 	z = float(parse[3])
-	# Scaling
 
-	tmp = copy.deepcopy(viewmodel)
-	viewmodel[0][0] = tmp[0][0]*x
-	viewmodel[1][0] = tmp[1][0]*x
-	viewmodel[2][0] = tmp[2][0]*x
-	viewmodel[3][0] = tmp[3][0]*x
-	viewmodel[0][1] = tmp[0][1]*y
-	viewmodel[1][1] = tmp[1][1]*y
-	viewmodel[2][1] = tmp[2][1]*y
-	viewmodel[3][1] = tmp[3][1]*y
-	viewmodel[0][2] = tmp[0][2]*z
-	viewmodel[1][2] = tmp[1][2]*z
-	viewmodel[2][2] = tmp[2][2]*z
-	viewmodel[3][2] = tmp[3][2]*z
+	tmp = [[x, 0, 0, 0],[0, y, 0, 0],[0, 0, z, 0],[0, 0, 0, 1]]
+	viewmodel = mult4x4(viewmodel, tmp)
 
 def lookat( parse ):
 	global vertexList
+	global viewmodel
+
+	viewmodel = [[1,0,0,0],[0,1,0,0],[0,0,1,0],[0,0,0,1]]
+
 	vertexList = copy.deepcopy(virgin)
 	if int(parse[1]) < 0 :
 		eye = vertexList[len(vertexList) + int(parse[1])]
@@ -239,91 +248,118 @@ def lookat( parse ):
 	Y = Z.cross(X)
 	Y = Vector(Y[0], Y[1], Y[2])
 
-	for v in vertexList:
-		v[0] = (v[0] - width/2)/(width/2)
-		v[1] = (v[1] - height/2)/(height/2)
-		v[2] = -v[2]
+	tmp = [[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]]
 
-		tmp = copy.deepcopy(v)
-		v[0] = X.x*tmp[0] + X.y*tmp[1] + X.z*tmp[2] + tmp[3]*-eye.dot(X)
-		v[1] = Y.x*tmp[0] + Y.y*tmp[1] + Y.z*tmp[2] + tmp[3]*-eye.dot(Y)
-		v[2] = Z.x*tmp[0] + Z.y*tmp[1] + Z.z*tmp[2] + tmp[3]*-eye.dot(Z)
+	#tmp[0][0] = X.x
+	#tmp[0][1] = X.y
+	#tmp[0][2] = X.z
+	#tmp[0][3] = -eye.dot(X)
+	#tmp[1][0] = Y.x
+	#tmp[1][1] = Y.y
+	#tmp[1][2] = Y.z
+	#tmp[1][3] = -eye.dot(Y)
+	#tmp[2][0] = Z.x
+	#tmp[2][1] = Z.y
+	#tmp[2][2] = Z.z
+	#tmp[2][3] = -eye.dot(Z)
+	#tmp[3][0] = 0
+	#tmp[3][1] = 0
+	#tmp[3][2] = 0
+	#tmp[3][3] = 1
 
-		v[0] = (v[0] * (width/2)) + (width/2)
-		v[1] = (v[1] * (height/2)) + (height/2)
-		v[2] = -v[2]
+
+	tmp[0][0] = X.x
+	tmp[1][0] = X.y
+	tmp[2][0] = X.z
+	tmp[3][0] = -eye.dot(X)
+	tmp[0][1] = Y.x
+	tmp[1][1] = Y.y
+	tmp[2][1] = Y.z
+	tmp[3][1] = -eye.dot(Y)
+	tmp[0][2] = Z.x
+	tmp[1][2] = Z.y
+	tmp[2][2] = Z.z
+	tmp[3][2] = -eye.dot(Z)
+	tmp[0][3] = 0
+	tmp[1][3] = 0
+	tmp[2][3] = 0
+	tmp[3][3] = 1
+
+	viewmodel = mult4x4(viewmodel, tmp)
+
 
 def rotatex( parse ):
 	global vertexList
-	degree = cos(float(parse[1]) * (pi/180))
-	for v in vertexList:
-		v[0] = (v[0] - width/2)/(width/2)
-		v[1] = (v[1] - height/2)/(height/2)
-		v[2] = -v[2]
+	global viewmodel
+	degree = float(parse[1])/180 * pi
 
-		tmp = copy.deepcopy(v)
-		v[1] = cos(degree)*tmp[1] - sin(degree)*tmp[2]
-		v[2] = sin(degree)*tmp[1] + cos(degree)*tmp[2]
+	tmp = [[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]]
 
-		v[0] = (v[0] * (width/2)) + (width/2)
-		v[1] = (v[1] * (height/2)) + (height/2)
-		v[2] = -v[2]
+	tmp[0][0] = 1
+	tmp[1][1] = cos(degree)
+	tmp[2][1] = -sin(degree)
+	tmp[1][2] = sin(degree)
+	tmp[2][2] = cos(degree)
+	tmp[3][3] = 1
+
+	viewmodel = mult4x4(viewmodel, tmp)
 
 def rotatey( parse ):
 	global vertexList
-	degree = cos(float(parse[1]) * (pi/180))
-	for v in vertexList:
-		v[0] = (v[0] - width/2)/(width/2)
-		v[1] = (v[1] - height/2)/(height/2)
-		v[2] = -v[2]
+	global viewmodel
+	degree = float(parse[1])/180 * pi
 
-		tmp = copy.deepcopy(v)
-		v[0] = cos(degree)*tmp[0] + sin(degree)*tmp[2]
-		v[2] = -sin(degree)*tmp[0] + cos(degree)*tmp[2]
+	tmp = [[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]]
 
-		v[0] = (v[0] * (width/2)) + (width/2)
-		v[1] = (v[1] * (height/2)) + (height/2)
-		v[2] = -v[2]
+	tmp[0][0] = cos(degree)
+	tmp[2][0] = sin(degree)
+	tmp[1][1] = 1
+	tmp[0][2] = -sin(degree)
+	tmp[2][2] = cos(degree)
+	tmp[3][3] = 1
+
+	viewmodel = mult4x4(viewmodel, tmp)
 
 def rotatez( parse ):
 	global vertexList
-	degree = cos(float(parse[1]) * (pi/180))
-	for v in vertexList:
-		v[0] = (v[0] - width/2)/(width/2)
-		v[1] = (v[1] - height/2)/(height/2)
-		v[2] = -v[2]
+	global viewmodel
+	degree = float(parse[1])/180 * pi
 
-		tmp = copy.deepcopy(v)
-		v[0] = cos(degree)*tmp[0] - sin(degree)*tmp[1]
-		v[1] = sin(degree)*tmp[0] + cos(degree)*tmp[1]
+	tmp = [[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]]
 
-		v[0] = (v[0] * (width/2)) + (width/2)
-		v[1] = (v[1] * (height/2)) + (height/2)
-		v[2] = -v[2]
+	tmp[0][0] = cos(degree)
+	tmp[1][0] = -sin(degree)
+	tmp[0][1] = sin(degree)
+	tmp[1][1] = cos(degree)
+	tmp[2][2] = 1
+	tmp[3][3] = 1
+
+	viewmodel = mult4x4(viewmodel, tmp)
 
 def loadmv( parse ):
 
-	global vertexList
-	vertexList = copy.deepcopy(virgin)
+	global viewmodel
 
-	for v in vertexList:
-		v[0] = (v[0] - width/2)/(width/2)
-		v[1] = (v[1] - height/2)/(height/2)
-		v[2] = -v[2]
-
-		tmp = copy.deepcopy(v)
-
-		v[0] = tmp[0]*float(parse[1]) + tmp[1]*float(parse[2]) + tmp[2]*float(parse[3]) + tmp[3]*float(parse[4])
-		v[1] = tmp[0]*float(parse[5]) + tmp[1]*float(parse[6]) + tmp[2]*float(parse[7]) + tmp[3]*float(parse[8])
-		v[2] = tmp[0]*float(parse[9]) + tmp[1]*float(parse[10]) + tmp[2]*float(parse[11]) + tmp[3]*float(parse[12])
-		v[3] = tmp[0]*float(parse[13]) + tmp[1]*float(parse[14]) + tmp[2]*float(parse[15]) + tmp[3]*float(parse[16])
-		
-		v[0] = (v[0] * (width/2)) + (width/2)
-		v[1] = (v[1] * (height/2)) + (height/2)
-		v[2] = -v[2]
+	viewmodel[0][0] = float(parse[1])
+	viewmodel[1][0] = float(parse[2])
+	viewmodel[2][0] = float(parse[3])
+	viewmodel[3][0] = float(parse[4])
+	viewmodel[0][1] = float(parse[5])
+	viewmodel[1][1] = float(parse[6])
+	viewmodel[2][1] = float(parse[7])
+	viewmodel[3][1] = float(parse[8])
+	viewmodel[0][2] = float(parse[9])
+	viewmodel[1][2] = float(parse[10])
+	viewmodel[2][2] = float(parse[11])
+	viewmodel[3][2] = float(parse[12])
+	viewmodel[0][3] = float(parse[13])
+	viewmodel[1][3] = float(parse[14])
+	viewmodel[2][3] = float(parse[15])
+	viewmodel[3][3] = float(parse[16])
 
 def orth( parse ):
 	global vertexList
+	global viewmodel
 	vertexList = copy.deepcopy(virgin)
 	left = float(parse[1])
 	right = float(parse[2])
@@ -337,25 +373,19 @@ def orth( parse ):
 	ty = -(top + bottom)/(top - bottom)
 	tz = -(farVal + nearVal)/(farVal - nearVal)
 
-	for v in vertexList:
-		v[0] = (v[0] - width/2)/(width/2)
-		v[1] = (v[1] - height/2)/(height/2)
-		v[2] = -v[2]
+	tmp = [[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]]
 
-		tmp = copy.deepcopy(v)
+	tmp[0][0] = 2/(right - left)
+	tmp[3][0] = tx
+	tmp[1][1] = 2/(top - bottom)
+	tmp[3][1] = ty
+	tmp[2][2] = -2/(farVal - nearVal)
+	tmp[3][2] = tz
+	tmp[3][3] = 1
 
-		#v[0] = tmp[0] * (2/(right-left)) + (right + left)/(right - left) + tmp[3]*tx
-		#v[1] = tmp[1] * (2/(top-bottom)) + (top + bottom)/(top - bottom) + tmp[3]*ty
-		#v[2] = tmp[2] * (-2/(farVal-nearVal)) + (farVal + nearVal)/(farVal - nearVal) + tmp[3]*tz
-		
-		v[0] = tmp[0] * (2/(right-left)) + tmp[3]*tx
-		v[1] = tmp[1] * (2/(top-bottom)) + tmp[3]*ty
-		v[2] = tmp[2] * (-2/(farVal-nearVal)) + tmp[3]*tz
+	viewmodel=[[1,0,0,0],[0,1,0,0],[0,0,1,0],[0,0,0,1]]
 
-
-		v[0] = (v[0]*width/2) + (width/2)
-		v[1] = (v[1]*height/2) + (height/2)
-		v[2] = -v[2]
+	viewmodel = mult4x4(viewmodel, tmp)
 
 def scalec( parse ):
 
@@ -365,79 +395,60 @@ def scalec( parse ):
 		opoint = copy.deepcopy(vertexList[len(vertexList) + int(parse[4])])
 	else :
 		opoint = copy.deepcopy(vertexList[int(parse[4]) - 1])
-	x = float(parse[1])
-	y = float(parse[2])
-	z = float(parse[3])
-	# Scaling
-
+	scale( float(parse[1]), float(parse[2]), float(parse[3]) )
 	tmp = copy.deepcopy(viewmodel)
-	viewmodel[0][0] = tmp[0][0]*x
-	viewmodel[1][0] = tmp[1][0]*x
-	viewmodel[2][0] = tmp[2][0]*x
-	viewmodel[3][0] = tmp[3][0]*x
-	viewmodel[0][1] = tmp[0][1]*y
-	viewmodel[1][1] = tmp[1][1]*y
-	viewmodel[2][1] = tmp[2][1]*y
-	viewmodel[3][1] = tmp[3][1]*y
-	viewmodel[0][2] = tmp[0][2]*z
-	viewmodel[1][2] = tmp[1][2]*z
-	viewmodel[2][2] = tmp[2][2]*z
-	viewmodel[3][2] = tmp[3][2]*z
-
-	for v in vertexList:
-		# Translate back into relative form
-		v[0] = (v[0] - width/2)/(width/2)
-		v[1] = (v[1] - height/2)/(height/2)
-
-		# Scale
-		v[0] = v[0] * x
-		v[1] = v[1] * y
-		v[2] = v[2] * z
-
-		# Translate back into xyz
-		v[0] = (v[0] * width/2)+(width/2)
-		v[1] = (v[1] * height/2)+(height/2)
-
+	applyviewmodel()
 	if int(parse[4]) < 0 :
-		dpoint = vertexList[len(vertexList) + int(parse[4])]
+		dpoint = copy.deepcopy(vertexList[len(vertexList) + int(parse[4])])
 	else :
-		dpoint = vertexList[int(parse[4]) - 1]
-	# Shifting back into place
+		dpoint = copy.deepcopy(vertexList[int(parse[4]) - 1])
+	print opoint
+	print dpoint
+	viewmodel = copy.deepcopy(tmp)
 	x = opoint[0] - dpoint[0]
 	y = opoint[1] - dpoint[1]
 	z = opoint[2] - dpoint[2]
-	for v in range(0, len(vertexList)):
-		(vertexList[v])[0] = (vertexList[v])[0] + x
-		(vertexList[v])[1] = (vertexList[v])[1] + y
-		(vertexList[v])[2] = (vertexList[v])[2] + z
+	print x
+	print y
+	print z
+
+	translate( x, y, z )
 
 def multmv( parse ):
 
-	global vertexList
-	for v in vertexList:
-		v[0] = (v[0] - (width/2))/(width/2)
-		v[1] = (v[1] - (height/2))/(height/2)
-		v[2] = -v[2]
+	global viewmodel
 
-		tmp = copy.deepcopy(v)
+	tmp = [[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]]
 
-		v[0] = tmp[0]*float(parse[1]) + tmp[1]*float(parse[2]) + tmp[2]*float(parse[3]) + tmp[3]*float(parse[4])
-		v[1] = tmp[0]*float(parse[5]) + tmp[1]*float(parse[6]) + tmp[2]*float(parse[7]) + tmp[3]*float(parse[8])
-		v[2] = tmp[0]*float(parse[9]) + tmp[1]*float(parse[10]) + tmp[2]*float(parse[11]) + tmp[3]*float(parse[12])
-		v[3] = tmp[0]*float(parse[13]) + tmp[1]*float(parse[14]) + tmp[2]*float(parse[15]) + tmp[3]*float(parse[16])
-		
-		v[0] = (v[0] * (width/2)) + (width/2)
-		v[1] = (v[1] * (height/2)) + (height/2)
+	tmp[0][0] = float(parse[1])
+	tmp[1][0] = float(parse[2])
+	tmp[2][0] = float(parse[3])
+	tmp[3][0] = float(parse[4])
+	tmp[0][1] = float(parse[5])
+	tmp[1][1] = float(parse[6])
+	tmp[2][1] = float(parse[7])
+	tmp[3][1] = float(parse[8])
+	tmp[0][2] = float(parse[9])
+	tmp[1][2] = float(parse[10])
+	tmp[2][2] = float(parse[11])
+	tmp[3][2] = float(parse[12])
+	tmp[0][3] = float(parse[13])
+	tmp[1][3] = float(parse[14])
+	tmp[2][3] = float(parse[15])
+	tmp[3][3] = float(parse[16])
+
+	
+	viewmodel = mult4x4(viewmodel, tmp)
 
 def frustum( parse ):
 	global vertexList
-	global modelview
+	global viewmodel
 	left = float(parse[1])
 	right = float(parse[2])
 	bottom = float(parse[3])
 	top = float(parse[4])
 	near = float(parse[5])
-	far = float(parse[6])
+	far = -float(parse[6])
 
 	t1 = (2*near)/(right - left)
 	t2 = (2*near)/(top-bottom)
@@ -446,33 +457,15 @@ def frustum( parse ):
 	c = -(far + near)/(far - near)
 	d = -(2*far*near)/(far - near)
 
-	print t1
-	print t2
-	print a
-	print b
-	print c
-	print d
-	print "+++++++++++++"
-
-	for v in vertexList:
-		v[0] = (v[0] - width/2)/(width/2)
-		v[1] = (v[1] - height/2)/(height/2)
-		v[2] = -v[2]
-
-		tmp = copy.deepcopy(v)
-
-		v[0] = tmp[0]*t1 + tmp[2]*a
-		v[1] = tmp[1]*t2 + tmp[2]*b
-		v[2] = tmp[2]*c + tmp[3]*d
-		v[3] = v[2]*-1
-
-		asdf
-
-		v[0] = (v[0]*width/2) + (width/2)
-		v[1] = (v[1]*height/2) + (height/2)
-		v[2] = -v[2]
-		print v
-	print "=============="
+	tmp = [[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]]
+	tmp[0][0] = t1
+	tmp[2][0] = a
+	tmp[1][1] = t2
+	tmp[2][1] = b
+	tmp[2][2] = c
+	tmp[3][2] = d
+	tmp[3][3] = -1
+	viewmodel = mult4x4(viewmodel, tmp)
 
 def applyviewmodel():
 	global vertexList
@@ -528,16 +521,18 @@ while (line != ""):
 		cull = True
 	elif parse[0] == "trif":
 		trif( parse )
+		vertexList = copy.deepcopy(virgin)
 	elif parse[0] == "color":
 		red = 255*float(parse[1])
 		green = 255*float(parse[2])
 		blue = 255*float(parse[3])
 		color = (red, green, blue)
 	elif parse[0] == "translate":
-		translate( (float(parse[1]) * width/2), (float(parse[2]) * height/2), -float(parse[3]), 1 ) 
+		#translate( (float(parse[1]) * width/2), (float(parse[2]) * height/2), -float(parse[3]), 1 ) 
+		translate( float(parse[1]), float(parse[2]), float(parse[3]) )
 	elif parse[0] == "scale":
 		#scale( (float(parse[1]) * width/2), -(float(parse[2]) * height/2), -float(parse[3]), 1 )
-		scale( float(parse[1]), float(parse[2]), float(parse[3]), 1)
+		scale( float(parse[1]), float(parse[2]), float(parse[3]) )
 	elif parse[0] == "lookat":
 		lookat( parse )
 	elif parse[0] == "rotatex":
@@ -561,8 +556,6 @@ while (line != ""):
 		#clipplane = [(float(parse[1]) * width/2) + width/2, (float(parse[2]) * height/2) + height/2, ((float(parse[3]) * height/2) + height/2), (float(parse[4]) * height/2) + height/2]
 		clipplane = [float(parse[1]), float(parse[2]), float(parse[3]), float(parse[4])]
 	line = fread.readline()
-for v in vertexList:
-	print v
 lightSource = Vector(0,0,10)
 cameraPos = Vector(0,0,10)
 for x in range(width):
