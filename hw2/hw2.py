@@ -391,28 +391,31 @@ def scalec( parse ):
 
 	global vertexList
 	global viewmodel
+	global virgin
 	if int(parse[4]) < 0 :
 		opoint = copy.deepcopy(vertexList[len(vertexList) + int(parse[4])])
 	else :
 		opoint = copy.deepcopy(vertexList[int(parse[4]) - 1])
 	scale( float(parse[1]), float(parse[2]), float(parse[3]) )
-	tmp = copy.deepcopy(viewmodel)
 	applyviewmodel()
 	if int(parse[4]) < 0 :
 		dpoint = copy.deepcopy(vertexList[len(vertexList) + int(parse[4])])
 	else :
 		dpoint = copy.deepcopy(vertexList[int(parse[4]) - 1])
-	print opoint
-	print dpoint
-	viewmodel = copy.deepcopy(tmp)
 	x = opoint[0] - dpoint[0]
 	y = opoint[1] - dpoint[1]
 	z = opoint[2] - dpoint[2]
-	print x
-	print y
-	print z
+
+	print vertexList
+
+	#vertexList = copy.deepcopy(virgin)
+	#print viewmodel
+	x = x/(width/2)
+	y = y/(height/2)
+	z = -z
 
 	translate( x, y, z )
+	#translate( 0.5, 0.5, 0.5 )
 
 def multmv( parse ):
 
