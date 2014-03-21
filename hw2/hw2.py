@@ -92,7 +92,7 @@ class Triangle( object ):
 						qc = Vector(q.x - self.p3.x, q.y - self.p3.y, q.z - self.p3.z)
 						t3 = ac.cross(qc)
 						t3 = Vector(t3[0], t3[1], t3[2]).dot(self.n)
-						if t1 >= 0 and t2 >= 0 and t3 >= 0 and temp.p.z <= 0 and temp.p.z >= -1: # Point q is within our triangle
+						if t1 >= 0 and t2 >= 0 and t3 >= 0 and temp.p.z < 0 and temp.p.z > -1: # Point q is within our triangle
 							return temp
 						else:
 							return Intersection( Vector(0,0,0), -1, Vector(0,0,0), self)
@@ -156,21 +156,9 @@ def trace(ray, objects, light, maxRecur):
 						col = intersect.obj.col * AMBIENT
 		tx = (intersect.p.x - width/2)/(width/2)
 		ty = (intersect.p.y - height/2)/(height/2)
-		#if intersect.p.x != 0 and intersect.p.y != 0 and intersect.p.z != 0:
-		#if intersect.d != -1:
-		#	print clipplane
-		#	print intersect.p.x
-		#	print intersect.p.y
-		#	print intersect.p.z
-		#print intersect.p.x * clipplane[0] + intersect.p.y * clipplane[1] + intersect.p.z * clipplane[2] + clipplane[3]
 		if clip and tx * clipplane[0] + ty * clipplane[1] + intersect.p.z * clipplane[2] + clipplane[3] <= 0:
 			col = Vector(-1, -1, -1)
 		return col
-	   
-def gammaCorrection(color,factor):
-		return (int(pow(color.x/255.0,factor)*255),
-						int(pow(color.y/255.0,factor)*255),
-						int(pow(color.z/255.0,factor)*255))
 
 def trif( parse ):
 	global vertexList
@@ -287,7 +275,6 @@ def lookat( parse ):
 
 	viewmodel = mult4x4(viewmodel, tmp)
 
-
 def rotatex( parse ):
 	global vertexList
 	global viewmodel
@@ -335,6 +322,32 @@ def rotatez( parse ):
 	tmp[3][3] = 1
 
 	viewmodel = mult4x4(viewmodel, tmp)
+
+def rotate( parse ):
+	global viewmodel
+
+	tmp = Vector( float(parse[2]), float(parse[3]), float(parse[4]) )
+	tmp = tmp.normal()
+
+	x = tmp.x
+	y = tmp.y
+	z = tmp.z
+	degree = (float(parse[1])/180 * pi)
+	c = cos(degree)
+	s = sin(degree)
+	tmp = [[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]]
+	tmp[0][0] = x * x * ( 1 - c ) + c
+	tmp[1][0] = x * y * ( 1 - c ) - ( z * s )
+	tmp[2][0] = x * z * ( 1 - c ) + ( y * s )
+	tmp[0][1] = y * x * ( 1 - c ) + ( z * s )
+	tmp[1][1] = y * y * ( 1 - c ) + c
+	tmp[2][1] = y * z * ( 1 - c ) - ( x * s )
+	tmp[0][2] = x * z * ( 1 - c ) - ( y * s )
+	tmp[1][2] = y * z * ( 1 - c ) + ( x * s )
+	tmp[2][2] = z * z * ( 1 - c ) + c
+	tmp[3][3] = 1
+
+	viewmodel = mult4x4( viewmodel, tmp )
 
 def loadmv( parse ):
 
@@ -397,6 +410,7 @@ def scalec( parse ):
 	else :
 		opoint = copy.deepcopy(vertexList[int(parse[4]) - 1])
 	scale( float(parse[1]), float(parse[2]), float(parse[3]) )
+	tmp = copy.deepcopy(vertexList)
 	applyviewmodel()
 	if int(parse[4]) < 0 :
 		dpoint = copy.deepcopy(vertexList[len(vertexList) + int(parse[4])])
@@ -405,17 +419,12 @@ def scalec( parse ):
 	x = opoint[0] - dpoint[0]
 	y = opoint[1] - dpoint[1]
 	z = opoint[2] - dpoint[2]
-
-	print vertexList
-
-	#vertexList = copy.deepcopy(virgin)
-	#print viewmodel
+	vertexList = copy.deepcopy(tmp)
 	x = x/(width/2)
 	y = y/(height/2)
 	z = -z
 
 	translate( x, y, z )
-	#translate( 0.5, 0.5, 0.5 )
 
 def multmv( parse ):
 
@@ -490,10 +499,39 @@ def applyviewmodel():
 		v[1] = (v[1]*height/2) + (height/2)
 		v[2] = -v[2]
 
+def rotatec( parse ):
+
+	global vertexList
+	global viewmodel
+	global virgin
+	if int(parse[5]) < 0 :
+		opoint = copy.deepcopy(vertexList[len(vertexList) + int(parse[5])])
+	else :
+		opoint = copy.deepcopy(vertexList[int(parse[5]) - 1])
+	rotate( parse )
+	tmp = copy.deepcopy(vertexList)
+	applyviewmodel()
+	if int(parse[5]) < 0 :
+		dpoint = copy.deepcopy(vertexList[len(vertexList) + int(parse[5])])
+	else :
+		dpoint = copy.deepcopy(vertexList[int(parse[5]) - 1])
+	x = opoint[0] - dpoint[0]
+	y = opoint[1] - dpoint[1]
+	z = opoint[2] - dpoint[2]
+	print x
+	print y
+	print z
+	print opoint
+	print dpoint
+	vertexList = copy.deepcopy(tmp)
+	x = x/(width/2)
+	y = y/(height/2)
+	z = -z
+
+	translate( x, y, z )
 
 
 AMBIENT = 1
-GAMMA_CORRECTION = 1/2.2
 
 global viewmodel
 viewmodel= [[1, 0, 0, 0,],[0, 1, 0, 0,],[0, 0, 1, 0,],[0, 0, 0, 1,]]
@@ -524,6 +562,9 @@ while (line != ""):
 		cull = True
 	elif parse[0] == "trif":
 		trif( parse )
+		print "-----------------"
+		print vertexList[1]
+		print "-----------------"
 		vertexList = copy.deepcopy(virgin)
 	elif parse[0] == "color":
 		red = 255*float(parse[1])
@@ -531,10 +572,8 @@ while (line != ""):
 		blue = 255*float(parse[3])
 		color = (red, green, blue)
 	elif parse[0] == "translate":
-		#translate( (float(parse[1]) * width/2), (float(parse[2]) * height/2), -float(parse[3]), 1 ) 
 		translate( float(parse[1]), float(parse[2]), float(parse[3]) )
 	elif parse[0] == "scale":
-		#scale( (float(parse[1]) * width/2), -(float(parse[2]) * height/2), -float(parse[3]), 1 )
 		scale( float(parse[1]), float(parse[2]), float(parse[3]) )
 	elif parse[0] == "lookat":
 		lookat( parse )
@@ -544,6 +583,8 @@ while (line != ""):
 		rotatey( parse )
 	elif parse[0] == "rotatez":
 		rotatez( parse )
+	elif parse[0] == "rotate":
+		rotate( parse )
 	elif parse[0] == "loadmv":
 		loadmv( parse )
 	elif parse[0] == "ortho":
@@ -554,6 +595,8 @@ while (line != ""):
 		multmv( parse )
 	elif parse[0] == "frustum":
 		frustum( parse )
+	elif parse[0] == "rotatec":
+		rotatec( parse )
 	elif parse[0] == "clipplane":
 		clip = True
 		#clipplane = [(float(parse[1]) * width/2) + width/2, (float(parse[2]) * height/2) + height/2, ((float(parse[3]) * height/2) + height/2), (float(parse[4]) * height/2) + height/2]
@@ -563,8 +606,8 @@ lightSource = Vector(0,0,10)
 cameraPos = Vector(0,0,10)
 for x in range(width):
 		for y in range(height):
-				ray = Ray( cameraPos, (Vector(x,y,0)-cameraPos).normal())
+				ray = Ray( cameraPos, (Vector(x-2.5,y-2.5,0)-cameraPos).normal())
 				col = trace(ray, objs, lightSource, 10)
 				if col.x != -1 and col.y != -1 and col.z != -1:
-					img.putpixel((x,y),gammaCorrection(col,GAMMA_CORRECTION))
+					img.putpixel((int(x),int(y)),(int(col.x), int(col.y), int(col.z)))
 img.save(fileName)

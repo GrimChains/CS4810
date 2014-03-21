@@ -29,3 +29,6 @@ python ./hw2.py hw2multmv.txt
 python ./hw2.py hw2ortho.txt
 python ./hw2.py hw2clipplane.txt
 python ./hw2.py hw2frustum.txt
+python ./hw2.py hw2pixelclip.txt
+python ./hw2.py hw2rotate.txt
+python ./hw2.py hw2rotatec.txt
