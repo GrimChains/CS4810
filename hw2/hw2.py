@@ -183,6 +183,11 @@ def trif( parse ):
 		if a.cross(b)[2] > 0:
 			objs.append(Triangle(Vector(vertex1[0]/vertex1[3], vertex1[1]/vertex1[3], vertex1[2]/vertex1[3]), Vector(vertex2[0]/vertex2[3], vertex2[1]/vertex2[3], vertex2[2]/vertex2[3]), Vector(vertex3[0]/vertex3[3], vertex3[1]/vertex3[3], vertex3[2]/vertex3[3]), Vector(color[0], color[1], color[2])))
 	else:
+		print ";;;;;;;;;;;;;;;;;;;;"
+		print vertex1
+		print vertex2
+		print vertex3
+		print ";;;;;;;;;;;;;;;;;;;;"
 		objs.append(Triangle(Vector(vertex1[0]/vertex1[3], vertex1[1]/vertex1[3], vertex1[2]/vertex1[3]), Vector(vertex2[0]/vertex2[3], vertex2[1]/vertex2[3], vertex2[2]/vertex2[3]), Vector(vertex3[0]/vertex3[3], vertex3[1]/vertex3[3], vertex3[2]/vertex3[3]), Vector(color[0], color[1], color[2])))
 
 def translate( x, y, z ):
@@ -492,17 +497,7 @@ def applyviewmodel():
 		v[2] = -v[2]
 
 		back = copy.deepcopy( viewmodel )
-		print viewmodel[0]
-		print viewmodel[1]
-		print viewmodel[2]
-		print viewmodel[3]
-		print "++++++++++++++"
 		viewmodel = mult4x4(viewmodel, proj)
-		print viewmodel[0]
-		print viewmodel[1]
-		print viewmodel[2]
-		print viewmodel[3]
-		print "=============="
 		tmp = copy.deepcopy(v)
 
 		v[0] = tmp[0]*viewmodel[0][0] + tmp[1]*viewmodel[1][0] + tmp[2]*viewmodel[2][0] + tmp[3]*viewmodel[3][0]
