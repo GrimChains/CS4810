@@ -454,7 +454,7 @@ def multmv( parse ):
 
 def frustum( parse ):
 	global vertexList
-	global viewmodel
+	global proj
 	left = float(parse[1])
 	right = float(parse[2])
 	bottom = float(parse[3])
@@ -466,8 +466,10 @@ def frustum( parse ):
 	t2 = (2*near)/(top-bottom)
 	a = (right + left)/(right-left)
 	b = (top + bottom)/(top-bottom)
-	c = -(far + near)/(far - near)
-	d = -(2*far*near)/(far - near)
+	#c = -(far + near)/(far - near)
+	#d = -(2*far*near)/(far - near)
+	c = (far + near)/(far - near)
+	d = (2*far*near)/(far - near)
 
 	tmp = [[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]]
 	tmp[0][0] = t1
@@ -477,17 +479,30 @@ def frustum( parse ):
 	tmp[2][2] = c
 	tmp[3][2] = d
 	tmp[3][3] = -1
-	viewmodel = mult4x4(viewmodel, tmp)
+	proj = mult4x4(proj, tmp)
 
 def applyviewmodel():
 	global vertexList
 	global viewmodel
+	global proj
 
 	for v in vertexList:
 		v[0] = (v[0] - width/2)/(width/2)
 		v[1] = (v[1] - height/2)/(height/2)
 		v[2] = -v[2]
 
+		back = copy.deepcopy( viewmodel )
+		print viewmodel[0]
+		print viewmodel[1]
+		print viewmodel[2]
+		print viewmodel[3]
+		print "++++++++++++++"
+		viewmodel = mult4x4(viewmodel, proj)
+		print viewmodel[0]
+		print viewmodel[1]
+		print viewmodel[2]
+		print viewmodel[3]
+		print "=============="
 		tmp = copy.deepcopy(v)
 
 		v[0] = tmp[0]*viewmodel[0][0] + tmp[1]*viewmodel[1][0] + tmp[2]*viewmodel[2][0] + tmp[3]*viewmodel[3][0]
@@ -498,6 +513,9 @@ def applyviewmodel():
 		v[0] = (v[0]*width/2) + (width/2)
 		v[1] = (v[1]*height/2) + (height/2)
 		v[2] = -v[2]
+
+
+		viewmodel = copy.deepcopy(back)
 
 def rotatec( parse ):
 
@@ -534,7 +552,9 @@ def rotatec( parse ):
 AMBIENT = 1
 
 global viewmodel
-viewmodel= [[1, 0, 0, 0,],[0, 1, 0, 0,],[0, 0, 1, 0,],[0, 0, 0, 1,]]
+viewmodel = [[1, 0, 0, 0,],[0, 1, 0, 0,],[0, 0, 1, 0,],[0, 0, 0, 1,]]
+global proj
+proj = [[1, 0, 0, 0,],[0, 1, 0, 0,],[0, 0, 1, 0,],[0, 0, 0, 1,]]
 
 objs = []
 global vertexList
@@ -561,10 +581,12 @@ while (line != ""):
 	elif parse[0] == "cull":
 		cull = True
 	elif parse[0] == "trif":
+		for v in vertexList:
+			print v
+		print "^^^^^^^^^^^^^^^"
 		trif( parse )
-		print "-----------------"
-		print vertexList[1]
-		print "-----------------"
+		for v in vertexList:
+			print v
 		vertexList = copy.deepcopy(virgin)
 	elif parse[0] == "color":
 		red = 255*float(parse[1])
