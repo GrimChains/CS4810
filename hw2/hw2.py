@@ -97,21 +97,6 @@ class Triangle( object ):
 						else:
 							return Intersection( Vector(0,0,0), -1, Vector(0,0,0), self)
 			   
-class Plane( object ):
-	   
-		def __init__(self, point, normal, color):
-				self.n = normal
-				self.p = point
-				self.col = color
-			   
-		def intersection(self, l):
-				d = l.d.dot(self.n)
-				if d == 0:
-						return Intersection( vector(0,0,0), -1, vector(0,0,0), self)
-				else:
-						d = (self.p - l.o).dot(self.n) / d
-						return Intersection(l.o+l.d*d, d, self.n, self)
-			   
 class Ray( object ):
 	   
 		def __init__(self, origin, direction):
@@ -143,7 +128,6 @@ def trace(ray, objects, light, maxRecur):
 				return (0,0,0)
 		intersect = testRay(ray, objects) 
 		if intersect.d == -1:
-				#col = Vector(AMBIENT,AMBIENT,AMBIENT)
 				col = Vector(-1, -1, -1)
 		elif intersect.n.dot(light - intersect.p) < 0:
 				col = intersect.obj.col * AMBIENT
@@ -183,11 +167,6 @@ def trif( parse ):
 		if a.cross(b)[2] > 0:
 			objs.append(Triangle(Vector(vertex1[0]/vertex1[3], vertex1[1]/vertex1[3], vertex1[2]/vertex1[3]), Vector(vertex2[0]/vertex2[3], vertex2[1]/vertex2[3], vertex2[2]/vertex2[3]), Vector(vertex3[0]/vertex3[3], vertex3[1]/vertex3[3], vertex3[2]/vertex3[3]), Vector(color[0], color[1], color[2])))
 	else:
-		print ";;;;;;;;;;;;;;;;;;;;"
-		print vertex1
-		print vertex2
-		print vertex3
-		print ";;;;;;;;;;;;;;;;;;;;"
 		objs.append(Triangle(Vector(vertex1[0]/vertex1[3], vertex1[1]/vertex1[3], vertex1[2]/vertex1[3]), Vector(vertex2[0]/vertex2[3], vertex2[1]/vertex2[3], vertex2[2]/vertex2[3]), Vector(vertex3[0]/vertex3[3], vertex3[1]/vertex3[3], vertex3[2]/vertex3[3]), Vector(color[0], color[1], color[2])))
 
 def translate( x, y, z ):
@@ -242,23 +221,6 @@ def lookat( parse ):
 	Y = Vector(Y[0], Y[1], Y[2])
 
 	tmp = [[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]]
-
-	#tmp[0][0] = X.x
-	#tmp[0][1] = X.y
-	#tmp[0][2] = X.z
-	#tmp[0][3] = -eye.dot(X)
-	#tmp[1][0] = Y.x
-	#tmp[1][1] = Y.y
-	#tmp[1][2] = Y.z
-	#tmp[1][3] = -eye.dot(Y)
-	#tmp[2][0] = Z.x
-	#tmp[2][1] = Z.y
-	#tmp[2][2] = Z.z
-	#tmp[2][3] = -eye.dot(Z)
-	#tmp[3][0] = 0
-	#tmp[3][1] = 0
-	#tmp[3][2] = 0
-	#tmp[3][3] = 1
 
 
 	tmp[0][0] = X.x
@@ -385,7 +347,6 @@ def orth( parse ):
 	top = float(parse[4])
 	farVal = float(parse[6])
 	nearVal = (2*float(parse[5])) - farVal
-	#near = 2*float(parse[5]) - far # might have to change this to 2n - f
 
 	tx = -(right + left)/(right - left)
 	ty = -(top + bottom)/(top - bottom)
@@ -459,7 +420,7 @@ def multmv( parse ):
 
 def frustum( parse ):
 	global vertexList
-	global proj
+	global viewmodel
 	left = float(parse[1])
 	right = float(parse[2])
 	bottom = float(parse[3])
@@ -471,10 +432,8 @@ def frustum( parse ):
 	t2 = (2*near)/(top-bottom)
 	a = (right + left)/(right-left)
 	b = (top + bottom)/(top-bottom)
-	#c = -(far + near)/(far - near)
-	#d = -(2*far*near)/(far - near)
-	c = (far + near)/(far - near)
-	d = (2*far*near)/(far - near)
+	c = -(far + near)/(far - near)
+	d = -(2*far*near)/(far - near)
 
 	tmp = [[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]]
 	tmp[0][0] = t1
@@ -484,20 +443,17 @@ def frustum( parse ):
 	tmp[2][2] = c
 	tmp[3][2] = d
 	tmp[3][3] = -1
-	proj = mult4x4(proj, tmp)
+	viewmodel = mult4x4(viewmodel, tmp)
 
 def applyviewmodel():
 	global vertexList
 	global viewmodel
-	global proj
 
 	for v in vertexList:
 		v[0] = (v[0] - width/2)/(width/2)
 		v[1] = (v[1] - height/2)/(height/2)
 		v[2] = -v[2]
 
-		back = copy.deepcopy( viewmodel )
-		viewmodel = mult4x4(viewmodel, proj)
 		tmp = copy.deepcopy(v)
 
 		v[0] = tmp[0]*viewmodel[0][0] + tmp[1]*viewmodel[1][0] + tmp[2]*viewmodel[2][0] + tmp[3]*viewmodel[3][0]
@@ -509,9 +465,6 @@ def applyviewmodel():
 		v[1] = (v[1]*height/2) + (height/2)
 		v[2] = -v[2]
 
-
-		viewmodel = copy.deepcopy(back)
-
 def rotatec( parse ):
 
 	global vertexList
@@ -522,7 +475,6 @@ def rotatec( parse ):
 	else :
 		opoint = copy.deepcopy(vertexList[int(parse[5]) - 1])
 	rotate( parse )
-	tmp = copy.deepcopy(vertexList)
 	applyviewmodel()
 	if int(parse[5]) < 0 :
 		dpoint = copy.deepcopy(vertexList[len(vertexList) + int(parse[5])])
@@ -531,25 +483,18 @@ def rotatec( parse ):
 	x = opoint[0] - dpoint[0]
 	y = opoint[1] - dpoint[1]
 	z = opoint[2] - dpoint[2]
-	print x
-	print y
-	print z
-	print opoint
-	print dpoint
-	vertexList = copy.deepcopy(tmp)
 	x = x/(width/2)
 	y = y/(height/2)
 	z = -z
 
 	translate( x, y, z )
+	vertexList = copy.deepcopy(virgin)
 
 
 AMBIENT = 1
 
 global viewmodel
-viewmodel = [[1, 0, 0, 0,],[0, 1, 0, 0,],[0, 0, 1, 0,],[0, 0, 0, 1,]]
-global proj
-proj = [[1, 0, 0, 0,],[0, 1, 0, 0,],[0, 0, 1, 0,],[0, 0, 0, 1,]]
+viewmodel= [[1, 0, 0, 0,],[0, 1, 0, 0,],[0, 0, 1, 0,],[0, 0, 0, 1,]]
 
 objs = []
 global vertexList
@@ -576,12 +521,7 @@ while (line != ""):
 	elif parse[0] == "cull":
 		cull = True
 	elif parse[0] == "trif":
-		for v in vertexList:
-			print v
-		print "^^^^^^^^^^^^^^^"
 		trif( parse )
-		for v in vertexList:
-			print v
 		vertexList = copy.deepcopy(virgin)
 	elif parse[0] == "color":
 		red = 255*float(parse[1])
@@ -616,7 +556,6 @@ while (line != ""):
 		rotatec( parse )
 	elif parse[0] == "clipplane":
 		clip = True
-		#clipplane = [(float(parse[1]) * width/2) + width/2, (float(parse[2]) * height/2) + height/2, ((float(parse[3]) * height/2) + height/2), (float(parse[4]) * height/2) + height/2]
 		clipplane = [float(parse[1]), float(parse[2]), float(parse[3]), float(parse[4])]
 	line = fread.readline()
 lightSource = Vector(0,0,10)
