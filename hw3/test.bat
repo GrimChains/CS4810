@@ -1,0 +1,11 @@
+python ./hw3.py hw3black.txt
+python ./hw3.py hw3bulb.txt
+python ./hw3.py hw3dodeca.txt
+python ./hw3.py hw3eye.txt
+python ./hw3.py hw3forward.txt
+python ./hw3.py hw3inside.txt
+python ./hw3.py hw3strange.txt
+python ./hw3.py hw3sun.txt
+python ./hw3.py hw3sunbulb.txt
+python ./hw3.py hw3up.txt
+python ./hw3.py hw3neglight.txt
