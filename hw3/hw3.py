@@ -3,6 +3,46 @@ import Image
 import sys
 import copy
  
+class Sphere( object ):
+       
+        def __init__(self, center, radius, color):
+                self.c = center
+                self.r = radius
+                self.col = color
+               
+        def intersection(self, l):
+                q = l.d.dot(l.o - self.c)**2 - (l.o - self.c).dot(l.o - self.c) + self.r**2
+                if q < 0:
+                        return Intersection( Vector(0,0,0), -1, Vector(0,0,0), self)
+                else:
+                        d = -l.d.dot(l.o - self.c)
+                        d1 = d - sqrt(q)
+                        d2 = d + sqrt(q)
+                        if 0 < d1 and ( d1 < d2 or d2 < 0):
+                                return Intersection(l.o+l.d*d1, d1, self.normal(l.o+l.d*d1), self)
+                        elif 0 < d2 and ( d2 < d1 or d1 < 0):
+                                return Intersection(l.o+l.d*d2, d2, self.normal(l.o+l.d*d2), self)
+                        else:
+                                return Intersection( Vector(0,0,0), -1, Vector(0,0,0), self)   
+                       
+        def normal(self, b):
+                return (b - self.c).normal()
+
+class Plane( object ):
+       
+        def __init__(self, point, normal, color):
+                self.n = normal
+                self.p = point
+                self.col = color
+               
+        def intersection(self, l):
+                d = l.d.dot(self.n)
+                if d == 0:
+                        return Intersection( vector(0,0,0), -1, vector(0,0,0), self)
+                else:
+                        d = (self.p - l.o).dot(self.n) / d
+                        return Intersection(l.o+l.d*d, d, self.n, self)
+
 class Vector( object ):
 	   
 		def __init__(self,x,y,z):
