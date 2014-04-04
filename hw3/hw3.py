@@ -41,7 +41,11 @@ class Plane( object ):
                         return Intersection( vector(0,0,0), -1, vector(0,0,0), self)
                 else:
                         d = (self.p - l.o).dot(self.n) / d
-                        return Intersection(l.o+l.d*d, d, self.n, self)
+                        temp = Intersection(l.o+l.d*d, d, self.n, self)
+                        if temp.p.z < 0 and temp.p.z > -1 :
+                        	return temp
+                        else :
+                        	return Intersection( Vector(0,0,0), -1, Vector(0,0,0), self)
 
 class Vector( object ):
 	   
@@ -290,19 +294,31 @@ def applyviewmodel():
 		v[1] = (v[1]*height/2) + (height/2)
 		v[2] = -v[2]
 
+def constructPlane( parse ):
+	global objs
+	if parse[1] != "0":
+		vp = new Vector(-float(parse[4])/float(parse[1]), 0, 0)
+	elif parse[2] != "0":
+		vp = new Vector(0, -float(parse[4])/float(parse[2]), 0)
+	else parse[3] != "0":
+		vp = new Vector(0, 0, -float(parse[4])/float(parse[3]))
+	
+
 
 AMBIENT = 1
 
 global viewmodel
 viewmodel= [[1, 0, 0, 0,],[0, 1, 0, 0,],[0, 0, 1, 0,],[0, 0, 0, 1,]]
-
+global objs
 objs = []
 global vertexList
 vertexList = []
+global bulbs
+bulbs = []
+global suns
+suns = []
+global virgin
 virgin = []
-color = (255, 255, 255)
-cull = False
-clip = False
 fread = open(sys.argv[1], 'r')
 line = fread.readline()
 info = line.split()
@@ -315,48 +331,16 @@ while (line != ""):
 	parse = line.split()
 	if parse == []:
 		parse
-	elif parse[0] == "xyz":
-		vertexList.append([(float(parse[1]) * width/2) + width/2, (float(parse[2]) * height/2) + height/2, -float(parse[3]), 1, color[0], color[1], color[2]])
-		virgin.append([(float(parse[1]) * width/2) + width/2, (float(parse[2]) * height/2) + height/2, -float(parse[3]), 1, color[0], color[1], color[2]])
-	elif parse[0] == "cull":
-		cull = True
-	elif parse[0] == "trif":
-		trif( parse )
-		vertexList = copy.deepcopy(virgin)
-	elif parse[0] == "color":
-		red = 255*float(parse[1])
-		green = 255*float(parse[2])
-		blue = 255*float(parse[3])
-		color = (red, green, blue)
-	elif parse[0] == "translate":
-		translate( float(parse[1]), float(parse[2]), float(parse[3]) )
-	elif parse[0] == "scale":
-		scale( float(parse[1]), float(parse[2]), float(parse[3]) )
+	elif parse[0] == "bulb" :
+		bulbs.append([float(parse[1]), float(parse[2]), float(parse[3]), float(parse[4]), float(parse[5]), float(parse[6])])
+	elif parse[0] == "sun" :
+		suns.append([float(parse[1]), float(parse[2]), float(parse[3]), float(parse[4]), float(parse[5]), float(parse[6])])
+	elif parse[0] == "plane" :
+		constructPlane( parse )
 	elif parse[0] == "lookat":
 		lookat( parse )
-	elif parse[0] == "rotatex":
-		rotatex( parse )
-	elif parse[0] == "rotatey":
-		rotatey( parse )
-	elif parse[0] == "rotatez":
-		rotatez( parse )
-	elif parse[0] == "rotate":
-		rotate( parse )
-	elif parse[0] == "loadmv":
-		loadmv( parse )
-	elif parse[0] == "ortho":
-		orth( parse )
-	elif parse[0] == "scalec":
-		scalec( parse )
-	elif parse[0] == "multmv":
-		multmv( parse )
 	elif parse[0] == "frustum":
 		frustum( parse )
-	elif parse[0] == "rotatec":
-		rotatec( parse )
-	elif parse[0] == "clipplane":
-		clip = True
-		clipplane = [float(parse[1]), float(parse[2]), float(parse[3]), float(parse[4])]
 	line = fread.readline()
 lightSource = Vector(0,0,10)
 cameraPos = Vector(0,0,10)
