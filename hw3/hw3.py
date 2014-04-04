@@ -106,9 +106,12 @@ def trace(ray, objects, maxRecur):
 	if maxRecur < 0:
 		return (0,0,0)
 	intersect = testRay(ray, objects)
-	if intersect.d == -1 or intersect.p.z < -100000000000:
+	if intersect.d == -1 or intersect.p.z < -100:
 		col = Vector(-1,-1,-1)
 	else :
+		eyeDir = Vector( cameraPos.x - intersect.p.x, cameraPos.y - intersect.p.y, cameraPos.z - intersect.p.z)
+		if intersect.n.dot(eyeDir) < 0 :
+			intersect.n = intersect.n * -1
 		col = Vector( 0, 0, 0 )
 		for b in bulbs:
 			lightDir = Vector(  b[0] - intersect.p.x,  b[1] - intersect.p.y,  b[2] - intersect.p.z).normal()
@@ -158,7 +161,7 @@ while (line != ""):
 				#bulbs.append([5.0*float(parse[1]), 5.0*float(parse[2]), 5.0*float(parse[3]), float(parse[4]), float(parse[5]), float(parse[6])])
 				bulbs.append([5.0*float(parse[1]), 5.0*float(parse[2]), 5.0*float(parse[3]), float(parse[4]), float(parse[5]), float(parse[6])])
 		elif parse[0] == "sun" :
-				suns.append([float(parse[1]), float(parse[2]), float(parse[3]), float(parse[4]), float(parse[5]), float(parse[6])])
+				suns.append([0.25*float(parse[1]), 0.25*float(parse[2]), 0.25*float(parse[3]), float(parse[4]), float(parse[5]), float(parse[6])])
 				#suns.append([5.0*float(parse[1]), 5.0*float(parse[2]), 5.0*float(parse[3]), float(parse[4]), float(parse[5]), float(parse[6])])
 				#suns.append([float(parse[1]), float(parse[2]), float(parse[3]), float(parse[4]), float(parse[5]), float(parse[6])])
 		elif parse[0] == "plane" :
@@ -169,14 +172,16 @@ while (line != ""):
 				elif float(parse[2]) != 0 :
 						objs.append( Plane( Vector( 0, 0, 5.0*(-float(parse[4])/float(parse[3])) ), Vector( 5.0*float(parse[1]), 5.0*float(parse[2]), 5.0*float(parse[3])), Vector(255.0*float(parse[5]), 255.0*float(parse[6]), 255.0*float(parse[7]))) )
 		elif parse[0] == "sphere" :
-				objs.append( Sphere( Vector(5.0*float(parse[1]), 5.0*float(parse[2]), 5.0*float(parse[3])), 10.0*float(parse[4]), Vector(float(parse[5])*255.0, float(parse[6])*255.0, float(parse[7])*255.0)) )
+				objs.append( Sphere( Vector(5.0*float(parse[1]), 5.0*float(parse[2]), 5.0*float(parse[3])), 5.0*float(parse[4]), Vector(float(parse[5])*255.0, float(parse[6])*255.0, float(parse[7])*255.0)) )
 		elif parse[0] == "eye" :
-				cameraPos = Vector( 5.0*float(parse[1]), 5.0*float(parse[2]), 5.0*float(parse[3]) )
+				parse
+				#cameraPos = Vector( 5.0*float(parse[1]), 5.0*float(parse[2]), 5.0*float(parse[3]) )
 		line = fread.readline()
 
 
 
 for x in range(width):
+		print x
 		for y in range(height):
 				ray = Ray( cameraPos, (Vector(x/(float(width)/10.0)-5,y/(float(height)/10.0)-5,0)-cameraPos).normal())
 				col = trace(ray, objs, 10)
