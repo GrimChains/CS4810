@@ -88,23 +88,21 @@ class Intersection( object ):
 				self.obj = obj
 			   
 def testRay(ray, objects, ignore=None):
-		intersect = Intersection( Vector(0,0,0), -1, Vector(0,0,0), None)
+	intersect = Intersection( Vector(0,0,0), -1, Vector(0,0,0), None)
+   
+	for obj in objects:
+		if obj is not ignore:
+			currentIntersect = obj.intersection(ray)
+			if currentIntersect.d > 0 and intersect.d < 0:
+				intersect = currentIntersect
+			elif 0 < currentIntersect.d < intersect.d:
+				intersect = currentIntersect
+	return intersect
 	   
-		for obj in objects:
-				if obj is not ignore:
-						currentIntersect = obj.intersection(ray)
-						if currentIntersect.d > 0 and intersect.d < 0:
-								intersect = currentIntersect
-						elif 0 < currentIntersect.d < intersect.d:
-								intersect = currentIntersect
-		return intersect
-	   
-def trace(ray, objects, maxRecur):
+def trace(ray, objects):
 	global suns
 	global bulbs
 	global cameraPos
-	if maxRecur < 0:
-		return (0,0,0)
 	intersect = testRay(ray, objects)
 	if intersect.d == -1 or intersect.p.z < -10000:
 		col = Vector(-1,-1,-1)
@@ -119,13 +117,13 @@ def trace(ray, objects, maxRecur):
 			inter = testRay( ray, objs, intersect.obj)
 			dist = sqrt( pow( intersect.p.x - b[0], 2) + pow( intersect.p.y - b[1], 2) + pow( intersect.p.z - b[2], 2) )
 			if inter.d == -1 or inter.d > dist:
-				col = Vector( col.x + intersect.obj.col.x * b[3] * intersect.n.dot(lightDir), col.y + intersect.obj.col.y * b[4] * intersect.n.dot(lightDir), col.z + intersect.obj.col.z * b[5] * intersect.n.dot(lightDir))
+				col = Vector( col.x + intersect.obj.col.x * b[3] * max(intersect.n.dot(lightDir), 0), col.y + intersect.obj.col.y * b[4] * max(intersect.n.dot(lightDir), 0), col.z + intersect.obj.col.z * b[5] * max(intersect.n.dot(lightDir), 0))
 		for s in suns:
 			lightDir = Vector( s[0], s[1], s[2] )
 			ray = Ray( intersect.p, lightDir )
 			inter = testRay( ray, objs, intersect.obj)
-			if inter.d < 0:
-				col = Vector( col.x + intersect.obj.col.x * s[3] * intersect.n.dot(lightDir), col.y + intersect.obj.col.y * s[4] * intersect.n.dot(lightDir), col.z + intersect.obj.col.z * s[5] * intersect.n.dot(lightDir))
+			if inter.d == -1:
+				col = Vector( col.x + intersect.obj.col.x * s[3] * max(intersect.n.dot(lightDir), 0), col.y + intersect.obj.col.y * s[4] * max(intersect.n.dot(lightDir), 0), col.z + intersect.obj.col.z * s[5] * max(intersect.n.dot(lightDir), 0))
 	return col
 
 
@@ -137,7 +135,6 @@ suns = []
 bulbs = []
 cameraPos = Vector(0,0,0)
 
-
 fread = open(sys.argv[1], 'r')
 line = fread.readline()
 info = line.split()
@@ -145,72 +142,69 @@ fileType = info[0]
 fileName = info[3]
 width = int(info[1])
 height = int(info[2])
-#width = 1000
-#height = 1000
 
 img = Image.new("RGBA", (width, height), (0,0,0,0))
-
 
 forward = Vector( 0.0, 0.0, -1.0 )
 up = Vector( 0.0, 1.0, 0.0 )
 right = Vector( 1.0, 0.0, 0.0 )
 
 while (line != ""):
-		parse = line.split()
-		if parse == []:
-				parse
-		elif parse[0] == "bulb" :
-				x = float(parse[1])
-				y = float(parse[2])
-				z = float(parse[3])
-				bulbs.append([x, y, z, float(parse[4]), float(parse[5]), float(parse[6])])
-		elif parse[0] == "sun" :
-				suns.append([float(parse[1]), float(parse[2]), float(parse[3]), float(parse[4]), float(parse[5]), float(parse[6])])
-		elif parse[0] == "plane" :
-				x = float(parse[1])
-				y = float(parse[2])
-				z = float(parse[3])
-				d = float(parse[4])
-				if x != 0:
-						objs.append( Plane( Vector( (-d/x), 0, 0), Vector( x, y, z), Vector(255*float(parse[5]), 255*float(parse[6]), 255*float(parse[7]))) )
-				elif y != 0 :
-						objs.append( Plane( Vector( 0, (-d/y), 0), Vector( x, y, z), Vector(255*float(parse[5]), 255*float(parse[6]), 255*float(parse[7]))) )
-				elif z != 0 :
-						objs.append( Plane( Vector( 0, 0, (-d/z) ), Vector( x, y, z), Vector(255*float(parse[5]), 255*float(parse[6]), 255*float(parse[7]))) )
-		elif parse[0] == "sphere" :
-				x = float(parse[1])
-				y = float(parse[2])
-				z = float(parse[3])
-				r = float(parse[4])
-				objs.append( Sphere( Vector( x, y, z), r, Vector(float(parse[5])*255.0, float(parse[6])*255.0, float(parse[7])*255.0)))
-		elif parse[0] == "eye" :
-				x = float(parse[1])
-				y = float(parse[2])
-				z = float(parse[3])
-				cameraPos = Vector( x, y, z )
-		elif parse[0] == "forward" :
-				forward = Vector( float(parse[1]), float(parse[2]), float(parse[3]))
-				tmp = forward.cross(up)
-				right = Vector( tmp[0], tmp[1], tmp[2]).normal()
-				tmp = right.cross(forward)
-				up = Vector( tmp[0], tmp[1], tmp[2] ).normal()
-		elif parse[0] == "up" :
-				temp = Vector( float(parse[1]), float(parse[2]), float(parse[3]))
-				tmp = forward.cross(temp)
-				right = Vector( tmp[0], tmp[1], tmp[2]).normal()
-				tmp = right.cross(forward)
-				up = Vector( tmp[0], tmp[1], tmp[2]).normal()
-		line = fread.readline()
+	parse = line.split()
+	if parse == []:
+		parse
+	elif parse[0] == "bulb" :
+		x = float(parse[1])
+		y = float(parse[2])
+		z = float(parse[3])
+		bulbs.append([x, y, z, float(parse[4]), float(parse[5]), float(parse[6])])
+	elif parse[0] == "sun" :
+		suns.append([float(parse[1]), float(parse[2]), float(parse[3]), float(parse[4]), float(parse[5]), float(parse[6])])
+	elif parse[0] == "aplane" :
+		x = float(parse[1])
+		y = float(parse[2])
+		z = float(parse[3])
+		d = float(parse[4])
+		if x != 0:
+			objs.append( Plane( Vector( (-d/x), 0, 0), Vector( x, y, z), Vector(255*float(parse[5]), 255*float(parse[6]), 255*float(parse[7]))) )
+		elif y != 0 :
+			objs.append( Plane( Vector( 0, (-d/y), 0), Vector( x, y, z), Vector(255*float(parse[5]), 255*float(parse[6]), 255*float(parse[7]))) )
+		elif z != 0 :
+			objs.append( Plane( Vector( 0, 0, (-d/z) ), Vector( x, y, z), Vector(255*float(parse[5]), 255*float(parse[6]), 255*float(parse[7]))) )
+	elif parse[0] == "sphere" :
+		x = float(parse[1])
+		y = float(parse[2])
+		z = float(parse[3])
+		r = float(parse[4])
+		objs.append( Sphere( Vector( x, y, z), r, Vector(float(parse[5])*255.0, float(parse[6])*255.0, float(parse[7])*255.0)))
+	elif parse[0] == "eye" :
+		x = float(parse[1])
+		y = float(parse[2])
+		z = float(parse[3])
+		cameraPos = Vector( x, y, z )
+	elif parse[0] == "forward" :
+		forward = Vector( float(parse[1]), float(parse[2]), float(parse[3]))
+		tmp = forward.cross(up)
+		right = Vector( tmp[0], tmp[1], tmp[2]).normal()
+		tmp = right.cross(forward)
+		up = Vector( tmp[0], tmp[1], tmp[2] ).normal()
+	elif parse[0] == "up" :
+		temp = Vector( float(parse[1]), float(parse[2]), float(parse[3]))
+		tmp = forward.cross(temp)
+		right = Vector( tmp[0], tmp[1], tmp[2]).normal()
+		tmp = right.cross(forward)
+		up = Vector( tmp[0], tmp[1], tmp[2]).normal()
+	line = fread.readline()
 
 
 
 for x in range(width):
-		print x
-		for y in range(height):
-				s = float(2 * x - width) / max(width, height)
-				t = float(height - 2 * y) / max(width, height)
-				ray = Ray( cameraPos, forward + (right * s) + (up * t))
-				col = trace(ray, objs, 10)
-				if col.x != -1 and col.y != -1 and col.z != -1 :
-						img.putpixel((int(x),int(y)),(int(col.x), int(col.y), int(col.z)))
+	print x
+	for y in range(height):
+		s = float(2 * x - width) / max(width, height)
+		t = float(height - 2 * y) / max(width, height)
+		ray = Ray( cameraPos, forward + (right * s) + (up * t))
+		col = trace(ray, objs)
+		if col.x != -1 and col.y != -1 and col.z != -1 :
+			img.putpixel((int(x),int(y)),(int(col.x), int(col.y), int(col.z)))
 img.save(fileName)
