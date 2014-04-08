@@ -31,7 +31,7 @@ class Vector( object ):
 			   
 		def __mul__(self, b):
 				assert type(b) == float or type(b) == int
-				return Vector(self.x*b, self.y*b, self.z*b)            
+				return Vector(self.x*b, self.y*b, self.z*b)
 
 class Sphere( object ):
 	   
@@ -53,7 +53,7 @@ class Sphere( object ):
 						elif 0 < d2 and ( d2 < d1 or d1 < 0):
 								return Intersection(l.o+l.d*d2, d2, self.normal(l.o+l.d*d2), self)
 						else:
-								return Intersection( Vector(0,0,0), -1, Vector(0,0,0), self)   
+								return Intersection( Vector(0,0,0), -1, Vector(0,0,0), self)
 					   
 		def normal(self, b):
 				return (b - self.c).normal()
@@ -104,8 +104,8 @@ def trace(ray, objects):
 	global bulbs
 	global cameraPos
 	intersect = testRay(ray, objects)
-	if intersect.d == -1 or intersect.p.z < -10000:
-		col = Vector(-1,-1,-1)
+	if intersect.d == -1 or intersect.p.z < -10000000:
+		return Vector(-1,-1,-1)
 	else :
 		eyeDir = Vector( cameraPos.x - intersect.p.x, cameraPos.y - intersect.p.y, cameraPos.z - intersect.p.z)
 		if intersect.n.dot(eyeDir) < 0 :
@@ -114,9 +114,13 @@ def trace(ray, objects):
 		for b in bulbs:
 			lightDir = Vector(  b[0] - intersect.p.x,  b[1] - intersect.p.y,  b[2] - intersect.p.z).normal()
 			ray = Ray( intersect.p, lightDir )
-			inter = testRay( ray, objs, intersect.obj)
+			inter = testRay( ray, objects, intersect.obj)
 			dist = sqrt( pow( intersect.p.x - b[0], 2) + pow( intersect.p.y - b[1], 2) + pow( intersect.p.z - b[2], 2) )
 			if inter.d == -1 or inter.d > dist:
+				"""print x
+				print y
+				print inter.d
+				print "bam"""
 				col = Vector( col.x + intersect.obj.col.x * b[3] * max(intersect.n.dot(lightDir), 0), col.y + intersect.obj.col.y * b[4] * max(intersect.n.dot(lightDir), 0), col.z + intersect.obj.col.z * b[5] * max(intersect.n.dot(lightDir), 0))
 		for s in suns:
 			lightDir = Vector( s[0], s[1], s[2] )
@@ -197,9 +201,8 @@ while (line != ""):
 	line = fread.readline()
 
 
-
 for x in range(width):
-	print x
+	#print x
 	for y in range(height):
 		s = float(2 * x - width) / max(width, height)
 		t = float(height - 2 * y) / max(width, height)
