@@ -1,4 +1,4 @@
-from math import sqrt, pow, pi
+import math
 import Image
 import sys
 import copy
@@ -17,7 +17,7 @@ class Vector( object ):
 				return (self.y*b.z-self.z*b.y, self.z*b.x-self.x*b.z, self.x*b.y-self.y*b.x)
 		   
 		def magnitude(self):
-				return sqrt(self.x**2+self.y**2+self.z**2)
+				return math.sqrt(self.x**2+self.y**2+self.z**2)
 			   
 		def normal(self):
 				mag = self.magnitude()
@@ -33,6 +33,28 @@ class Vector( object ):
 				assert type(b) == float or type(b) == int
 				return Vector(self.x*b, self.y*b, self.z*b)
 
+def ray_sphere(p0, d, sph):
+
+    pc = sph.c
+    r = sph.r
+
+    p0c = p0 - pc
+
+    a = d.dot(d)
+    b = (d * 2).dot(p0 - pc)
+    c = p0c.dot(p0c) - r**2
+
+    try:
+        t1 = (-b + math.sqrt(b**2 - 4*a*c))/(2*a)
+    except ValueError:
+        t1 = None
+    try:
+        t2 = (-b - math.sqrt(b**2 - 4*a*c))/(2*a)
+    except ValueError:
+        t2 = None
+
+    return t1, t2
+
 class Sphere( object ):
 	   
 		def __init__(self, center, radius, color):
@@ -41,20 +63,16 @@ class Sphere( object ):
 				self.col = color
 			   
 		def intersection(self, l):
-				q = l.d.dot(l.o - self.c)**2 - (l.o - self.c).dot(l.o - self.c) + self.r**2
-				if q < 0:
-						return Intersection( Vector(0,0,0), -1, Vector(0,0,0), self)
+				points = ray_sphere(l.o, l.d, self)
+				if points == (None, None):
+					return Intersection( Vector(0,0,0), -1, Vector(0,0,0), self)
+				elif points[0] != None and points[1] != None:
+					t = min(points)
 				else:
-						d = -l.d.dot(l.o - self.c)
-						d1 = d - sqrt(q)
-						d2 = d + sqrt(q)
-						if 0 < d1 and ( d1 < d2 or d2 < 0):
-								return Intersection(l.o+l.d*d1, d1, self.normal(l.o+l.d*d1), self)
-						elif 0 < d2 and ( d2 < d1 or d1 < 0):
-								return Intersection(l.o+l.d*d2, d2, self.normal(l.o+l.d*d2), self)
-						else:
-								return Intersection( Vector(0,0,0), -1, Vector(0,0,0), self)
-					   
+					t = max(points)
+				return Intersection( (l.o + l.d * t), math.sqrt( (l.d.x * t)**2 + (l.d.y * t)**2 + (l.d.z * t)**2), self.normal(l.o + l.d*t), self )
+
+
 		def normal(self, b):
 				return (b - self.c).normal()
 			   
@@ -115,12 +133,8 @@ def trace(ray, objects):
 			lightDir = Vector(  b[0] - intersect.p.x,  b[1] - intersect.p.y,  b[2] - intersect.p.z).normal()
 			ray = Ray( intersect.p, lightDir )
 			inter = testRay( ray, objects, intersect.obj)
-			dist = sqrt( pow( intersect.p.x - b[0], 2) + pow( intersect.p.y - b[1], 2) + pow( intersect.p.z - b[2], 2) )
+			dist = math.sqrt( pow( intersect.p.x - b[0], 2) + pow( intersect.p.y - b[1], 2) + pow( intersect.p.z - b[2], 2) )
 			if inter.d == -1 or inter.d > dist:
-				"""print x
-				print y
-				print inter.d
-				print "bam"""
 				col = Vector( col.x + intersect.obj.col.x * b[3] * max(intersect.n.dot(lightDir), 0), col.y + intersect.obj.col.y * b[4] * max(intersect.n.dot(lightDir), 0), col.z + intersect.obj.col.z * b[5] * max(intersect.n.dot(lightDir), 0))
 		for s in suns:
 			lightDir = Vector( s[0], s[1], s[2] )
@@ -164,7 +178,7 @@ while (line != ""):
 		bulbs.append([x, y, z, float(parse[4]), float(parse[5]), float(parse[6])])
 	elif parse[0] == "sun" :
 		suns.append([float(parse[1]), float(parse[2]), float(parse[3]), float(parse[4]), float(parse[5]), float(parse[6])])
-	elif parse[0] == "aplane" :
+	elif parse[0] == "plane" :
 		x = float(parse[1])
 		y = float(parse[2])
 		z = float(parse[3])
