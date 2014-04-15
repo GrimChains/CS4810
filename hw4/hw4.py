@@ -4,7 +4,7 @@ import sys
 import copy
 import threading
 import time
-
+import pygame
 
 class Pixel(threading.Thread):
 
@@ -21,7 +21,10 @@ class Pixel(threading.Thread):
         col = trace(ray, objs)
         if col.x != -1 and col.y != -1 and col.z != -1 :
             #imgLock.acquire()
-            img.putpixel((int(x),int(y)),(int(col.x), int(col.y), int(col.z)))
+            #img.putpixel((int(x),int(y)),(int(col.x), int(col.y), int(col.z)))
+            square.fill((col.x, col.y, col.z))
+            draw_me = pygame.Rect((x, y, 1, 1))
+            screen.blit(square, draw_me)
             #imgLock.release()
 
 
@@ -186,6 +189,10 @@ global width
 global height
 global pixBuff
 global imgLock
+pygame.init()
+global square
+global screen
+square = pygame.Surface((1,1))
 imgLock = threading.Lock()
 pixBuff = []
 objs = []
@@ -200,6 +207,8 @@ fileType = info[0]
 fileName = info[3]
 width = int(info[1])
 height = int(info[2])
+
+screen = pygame.display.set_mode((width, height))
 
 img = Image.new("RGBA", (width, height), (0,0,0,0))
 
@@ -264,6 +273,6 @@ for x in range(width):
         px.x = x
         px.y = y
         px.start()
-    print time.time() - t0
 print time.time() - t0
-img.save(fileName)
+while True:
+    pygame.display.flip()
