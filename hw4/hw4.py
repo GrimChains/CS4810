@@ -281,10 +281,17 @@ while True:
             print event.key
             if event.key == pygame.K_w:
                 cameraPos = Vector(cameraPos.x, cameraPos.y, -0.1+cameraPos.z)
-            if event.key == pygame.K_s:
+            elif event.key == pygame.K_s:
                 cameraPos = Vector(cameraPos.x, cameraPos.y, 0.1+cameraPos.z)
-            if event.key == pygame.K_a:
+            elif event.key == pygame.K_a:
                 cameraPos = Vector(-0.1+cameraPos.x, cameraPos.y, cameraPos.z)
-            if event.key == pygame.K_d:
+            elif event.key == pygame.K_d:
                 cameraPos = Vector(+0.1+cameraPos.x, cameraPos.y, cameraPos.z)
+            elif event.key == pygame.K_LCTRL:
+                cameraPos = Vector(cameraPos.x, -0.1+cameraPos.y, cameraPos.z)
+            elif event.key == pygame.K_SPACE:
+                cameraPos = Vector(cameraPos.x, 0.1+cameraPos.y, cameraPos.z)
+            elif event.key == pygame.K_ESCAPE:
+                pygame.quit()
+                sys.exit()
     clock.tick(10) # lock framerate to 10 fps.
