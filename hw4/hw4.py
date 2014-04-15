@@ -1,5 +1,4 @@
 import math
-import Image
 import sys
 import copy
 import threading
@@ -210,8 +209,6 @@ height = int(info[2])
 
 screen = pygame.display.set_mode((width, height))
 
-img = Image.new("RGBA", (width, height), (0,0,0,0))
-
 forward = Vector( 0.0, 0.0, -1.0 )
 up = Vector( 0.0, 1.0, 0.0 )
 right = Vector( 1.0, 0.0, 0.0 )
@@ -265,7 +262,6 @@ while (line != ""):
 print time.time() - t0
 
 for x in range(width):
-    #print x
     pixBuff.append([])
     for y in range(height):
         pixBuff[x].append([0])
@@ -274,5 +270,10 @@ for x in range(width):
         px.y = y
         px.start()
 print time.time() - t0
+clock = pygame.time.Clock()
 while True:
     pygame.display.flip()
+    for event in pygame.event.get():
+        if event.type==pygame.QUIT:
+            pygame.quit()
+            sys.exit()
