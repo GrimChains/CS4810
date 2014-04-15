@@ -23,9 +23,11 @@ class Pixel(threading.Thread):
                 #imgLock.acquire()
                 #img.putpixel((int(x),int(y)),(int(col.x), int(col.y), int(col.z)))
                 square.fill((col.x, col.y, col.z))
-                draw_me = pygame.Rect((x, y, 1, 1))
-                screen.blit(square, draw_me)
-                #imgLock.release()
+            else:
+                square.fill((0,0,0))
+            draw_me = pygame.Rect((x, y, 1, 1))
+            screen.blit(square, draw_me)
+            #imgLock.release()
             time.sleep(0.1)
 
 
@@ -283,9 +285,9 @@ while True:
         elif event.type == pygame.KEYDOWN:
             print event.key
             if event.key == pygame.K_w:
-                cameraPos = Vector(cameraPos.x, 0.1+cameraPos.y, cameraPos.z)
+                cameraPos = Vector(cameraPos.x, cameraPos.y, -0.1+cameraPos.z)
             if event.key == pygame.K_s:
-                cameraPos = Vector(cameraPos.x, -0.1+cameraPos.y, cameraPos.z)
+                cameraPos = Vector(cameraPos.x, cameraPos.y, 0.1+cameraPos.z)
             if event.key == pygame.K_a:
                 cameraPos = Vector(-0.1+cameraPos.x, cameraPos.y, cameraPos.z)
             if event.key == pygame.K_d:
