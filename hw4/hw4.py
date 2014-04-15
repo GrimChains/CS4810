@@ -8,27 +8,27 @@ import pygame
 class Pixel(threading.Thread):
 
     def run(self):
-        x = self.x
         y = self.y
         global img
         global width
         global height
         global imgLock
-        s = float(2 * x - width) / max(width, height)
         t = float(height - 2 * y) / max(width, height)
         while True:
-            ray = Ray( cameraPos, forward + (right * s) + (up * t))
-            col = trace(ray, objs)
-            if col.x != -1 and col.y != -1 and col.z != -1 :
-                #imgLock.acquire()
-                #img.putpixel((int(x),int(y)),(int(col.x), int(col.y), int(col.z)))
-                square.fill((col.x, col.y, col.z))
-            else:
-                square.fill((0,0,0))
-            draw_me = pygame.Rect((x, y, 1, 1))
-            screen.blit(square, draw_me)
-            #imgLock.release()
-            time.sleep(0.1)
+            for x in range(width):
+                s = float(2 * x - width) / max(width, height)
+                ray = Ray( cameraPos, forward + (right * s) + (up * t))
+                col = trace(ray, objs)
+                if col.x != -1 and col.y != -1 and col.z != -1 :
+                    #imgLock.acquire()
+                    #img.putpixel((int(x),int(y)),(int(col.x), int(col.y), int(col.z)))
+                    square.fill((int(col.x), int(col.y), int(col.z)))
+                else:
+                    square.fill((0,0,0))
+                draw_me = pygame.Rect((x, y, 1, 1))
+                screen.blit(square, draw_me)
+                #imgLock.release()
+           # time.sleep(0.1)
 
 
 class ObjFile( threading.Thread ):
@@ -265,15 +265,10 @@ while (line != ""):
     line = fread.readline()
 print time.time() - t0
 
-for x in range(width):
-    pixBuff.append([])
-    for y in range(height):
-        print x, y
-        pixBuff[x].append([0])
-        px = Pixel()
-        px.x = x
-        px.y = y
-        px.start()
+for y in range(height):
+    px = Pixel()
+    px.y = y
+    px.start()
 print time.time() - t0
 clock = pygame.time.Clock()
 while True:
