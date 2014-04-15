@@ -16,15 +16,17 @@ class Pixel(threading.Thread):
         global imgLock
         s = float(2 * x - width) / max(width, height)
         t = float(height - 2 * y) / max(width, height)
-        ray = Ray( cameraPos, forward + (right * s) + (up * t))
-        col = trace(ray, objs)
-        if col.x != -1 and col.y != -1 and col.z != -1 :
-            #imgLock.acquire()
-            #img.putpixel((int(x),int(y)),(int(col.x), int(col.y), int(col.z)))
-            square.fill((col.x, col.y, col.z))
-            draw_me = pygame.Rect((x, y, 1, 1))
-            screen.blit(square, draw_me)
-            #imgLock.release()
+        while True:
+            ray = Ray( cameraPos, forward + (right * s) + (up * t))
+            col = trace(ray, objs)
+            if col.x != -1 and col.y != -1 and col.z != -1 :
+                #imgLock.acquire()
+                #img.putpixel((int(x),int(y)),(int(col.x), int(col.y), int(col.z)))
+                square.fill((col.x, col.y, col.z))
+                draw_me = pygame.Rect((x, y, 1, 1))
+                screen.blit(square, draw_me)
+                #imgLock.release()
+            time.sleep(0.1)
 
 
 class ObjFile( threading.Thread ):
@@ -216,7 +218,7 @@ right = Vector( 1.0, 0.0, 0.0 )
 while (line != ""):
     parse = line.split()
     if parse == []:
-        parse
+        pass
     elif parse[0] == "bulb" :
         x = float(parse[1])
         y = float(parse[2])
@@ -264,6 +266,7 @@ print time.time() - t0
 for x in range(width):
     pixBuff.append([])
     for y in range(height):
+        print x, y
         pixBuff[x].append([0])
         px = Pixel()
         px.x = x
@@ -277,3 +280,14 @@ while True:
         if event.type==pygame.QUIT:
             pygame.quit()
             sys.exit()
+        elif event.type == pygame.KEYDOWN:
+            print event.key
+            if event.key == pygame.K_w:
+                cameraPos = Vector(cameraPos.x, 0.1+cameraPos.y, cameraPos.z)
+            if event.key == pygame.K_s:
+                cameraPos = Vector(cameraPos.x, -0.1+cameraPos.y, cameraPos.z)
+            if event.key == pygame.K_a:
+                cameraPos = Vector(-0.1+cameraPos.x, cameraPos.y, cameraPos.z)
+            if event.key == pygame.K_d:
+                cameraPos = Vector(+0.1+cameraPos.x, cameraPos.y, cameraPos.z)
+    clock.tick(10) # lock framerate to 10 fps.
