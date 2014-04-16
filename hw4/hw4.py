@@ -13,8 +13,8 @@ class Pixel(threading.Thread):
         global width
         global height
         global imgLock
+        flipflop = self.flipflop
         t = float(height - 2 * y) / max(width, height)
-        flipflop = True
         while True:
             flipflop = not flipflop
             for x in range(width):
@@ -305,8 +305,11 @@ right = Vector( 1.0, 0.0, 0.0 )
 
 
 # Thread factory
+flip = True
 for y in range(height):
     px = Pixel()
+    px.flipflop = flip
+    flip = not flip
     px.y = y
     px.start()
 
