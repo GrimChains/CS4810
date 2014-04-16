@@ -5,6 +5,7 @@ import threading
 import time
 import pygame
 
+
 class Pixel(threading.Thread):
 
     def run(self):
@@ -17,14 +18,13 @@ class Pixel(threading.Thread):
         while True:
             for x in range(width):
                 s = float(2 * x - width) / max(width, height)
-                ray = Ray( cameraPos, forward + (right * s) + (up * t))
+                ray = Ray(cameraPos, forward + (right * s) + (up * t))
                 col = trace(ray, objs)
                 if col.x != -1 and col.y != -1 and col.z != -1 :
                     #imgLock.acquire()
-                    #img.putpixel((int(x),int(y)),(int(col.x), int(col.y), int(col.z)))
                     square.fill((int(col.x), int(col.y), int(col.z)))
                 else:
-                    square.fill((0,0,0))
+                    square.fill((0, 0, 0))
                 draw_me = pygame.Rect((x, y, 1, 1))
                 screen.blit(square, draw_me)
                 #imgLock.release()
@@ -33,13 +33,78 @@ class Pixel(threading.Thread):
 
 class ObjFile( threading.Thread ):
 
-    def __init__(self, file_name):
-        self.file_name = file_name
-
     def run( self ):
-        self.fread = open(self.file_name, 'r')
+        global bulbs
+        global suns
+        global objs
+        global width
+        global height
+        self.fread = open(self.fileName, 'r')
+        fread = self.fread
+        line = fread.readline()
+        info = line.split()
+        width = int(info[1])
+        height = int(info[2])
         while True:
-            print "Still need to implement this...."
+            old_bulbs = []
+            old_suns = []
+            old_objs = []
+            line = fread.readline()
+            while line != "":
+                parse = line.split()
+                if parse == []:
+                    pass
+                elif parse[0] == "bulb" :
+                    x = float(parse[1])
+                    y = float(parse[2])
+                    z = float(parse[3])
+                    old_bulbs.append([x, y, z, float(parse[4]), float(parse[5]), float(parse[6])])
+                elif parse[0] == "sun" :
+                    old_suns.append([float(parse[1]), float(parse[2]), float(parse[3]), float(parse[4]), float(parse[5]), float(parse[6])])
+                elif parse[0] == "plane" :
+                    x = float(parse[1])
+                    y = float(parse[2])
+                    z = float(parse[3])
+                    d = float(parse[4])
+                    if x != 0:
+                        old_objs.append( Plane( Vector( (-d/x), 0, 0), Vector( x, y, z), Vector(255*float(parse[5]), 255*float(parse[6]), 255*float(parse[7]))) )
+                    elif y != 0 :
+                        old_objs.append( Plane( Vector( 0, (-d/y), 0), Vector( x, y, z), Vector(255*float(parse[5]), 255*float(parse[6]), 255*float(parse[7]))) )
+                    elif z != 0 :
+                        old_objs.append( Plane( Vector( 0, 0, (-d/z) ), Vector( x, y, z), Vector(255*float(parse[5]), 255*float(parse[6]), 255*float(parse[7]))) )
+                elif parse[0] == "sphere" :
+                    x = float(parse[1])
+                    y = float(parse[2])
+                    z = float(parse[3])
+                    r = float(parse[4])
+                    old_objs.append( Sphere( Vector( x, y, z), r, Vector(float(parse[5])*255.0, float(parse[6])*255.0, float(parse[7])*255.0)))
+                #elif parse[0] == "eye" :
+                #    x = float(parse[1])
+                #    y = float(parse[2])
+                #    z = float(parse[3])
+                #    cameraPos = Vector( x, y, z )
+                #elif parse[0] == "forward" :
+                #    forward = Vector( float(parse[1]), float(parse[2]), float(parse[3]))
+                #    tmp = forward.cross(up)
+                #    right = Vector( tmp[0], tmp[1], tmp[2]).normal()
+                #    tmp = right.cross(forward)
+                #    up = Vector( tmp[0], tmp[1], tmp[2] ).normal()
+                #elif parse[0] == "up" :
+                #    temp = Vector( float(parse[1]), float(parse[2]), float(parse[3]))
+                #    tmp = forward.cross(temp)
+                #    right = Vector( tmp[0], tmp[1], tmp[2]).normal()
+                #    tmp = right.cross(forward)
+                #    up = Vector( tmp[0], tmp[1], tmp[2]).normal()
+                line = fread.readline()
+            fread.seek(0)
+            if old_bulbs != bulbs:
+                bulbs = copy.deepcopy(old_bulbs)
+            if old_suns != suns:
+                suns = copy.deepcopy(suns)
+            if old_objs != objs:
+                objs = copy.deepcopy(old_objs)
+            time.sleep(1)
+
 
 class Vector(object):
 
@@ -195,6 +260,8 @@ global imgLock
 pygame.init()
 global square
 global screen
+width = 1
+height = 1
 square = pygame.Surface((1,1))
 imgLock = threading.Lock()
 pixBuff = []
@@ -203,13 +270,11 @@ suns = []
 bulbs = []
 cameraPos = Vector(0,0,0)
 
-fread = open(sys.argv[1], 'r')
-line = fread.readline()
-info = line.split()
-fileType = info[0]
-fileName = info[3]
-width = int(info[1])
-height = int(info[2])
+objFile = ObjFile()
+objFile.fileName = sys.argv[1]
+objFile.start()
+
+time.sleep(10)
 
 screen = pygame.display.set_mode((width, height))
 
@@ -217,52 +282,7 @@ forward = Vector( 0.0, 0.0, -1.0 )
 up = Vector( 0.0, 1.0, 0.0 )
 right = Vector( 1.0, 0.0, 0.0 )
 
-while (line != ""):
-    parse = line.split()
-    if parse == []:
-        pass
-    elif parse[0] == "bulb" :
-        x = float(parse[1])
-        y = float(parse[2])
-        z = float(parse[3])
-        bulbs.append([x, y, z, float(parse[4]), float(parse[5]), float(parse[6])])
-    elif parse[0] == "sun" :
-        suns.append([float(parse[1]), float(parse[2]), float(parse[3]), float(parse[4]), float(parse[5]), float(parse[6])])
-    elif parse[0] == "plane" :
-        x = float(parse[1])
-        y = float(parse[2])
-        z = float(parse[3])
-        d = float(parse[4])
-        if x != 0:
-            objs.append( Plane( Vector( (-d/x), 0, 0), Vector( x, y, z), Vector(255*float(parse[5]), 255*float(parse[6]), 255*float(parse[7]))) )
-        elif y != 0 :
-            objs.append( Plane( Vector( 0, (-d/y), 0), Vector( x, y, z), Vector(255*float(parse[5]), 255*float(parse[6]), 255*float(parse[7]))) )
-        elif z != 0 :
-            objs.append( Plane( Vector( 0, 0, (-d/z) ), Vector( x, y, z), Vector(255*float(parse[5]), 255*float(parse[6]), 255*float(parse[7]))) )
-    elif parse[0] == "sphere" :
-        x = float(parse[1])
-        y = float(parse[2])
-        z = float(parse[3])
-        r = float(parse[4])
-        objs.append( Sphere( Vector( x, y, z), r, Vector(float(parse[5])*255.0, float(parse[6])*255.0, float(parse[7])*255.0)))
-    elif parse[0] == "eye" :
-        x = float(parse[1])
-        y = float(parse[2])
-        z = float(parse[3])
-        cameraPos = Vector( x, y, z )
-    elif parse[0] == "forward" :
-        forward = Vector( float(parse[1]), float(parse[2]), float(parse[3]))
-        tmp = forward.cross(up)
-        right = Vector( tmp[0], tmp[1], tmp[2]).normal()
-        tmp = right.cross(forward)
-        up = Vector( tmp[0], tmp[1], tmp[2] ).normal()
-    elif parse[0] == "up" :
-        temp = Vector( float(parse[1]), float(parse[2]), float(parse[3]))
-        tmp = forward.cross(temp)
-        right = Vector( tmp[0], tmp[1], tmp[2]).normal()
-        tmp = right.cross(forward)
-        up = Vector( tmp[0], tmp[1], tmp[2]).normal()
-    line = fread.readline()
+
 print time.time() - t0
 
 for y in range(height):
@@ -294,4 +314,4 @@ while True:
             elif event.key == pygame.K_ESCAPE:
                 pygame.quit()
                 sys.exit()
-    clock.tick(10) # lock framerate to 10 fps.
+    #clock.tick(10) # lock framerate to 10 fps.
