@@ -180,6 +180,11 @@ class Sphere(object):
                 return (b - self.c).normal()
 
 
+class Box(object):
+		def __init__(self, verts, color):
+				self.verts = verts;
+				self.color = color;
+
 class Plane(object):
 
         def __init__(self, point, normal, color):
