@@ -34,17 +34,20 @@ class Pixel(threading.Thread):
 class ObjFile( threading.Thread ):
 
     def run( self ):
+        global fileLock
         global bulbs
         global suns
         global objs
         global width
         global height
+        fileLock.acquire()
         self.fread = open(self.fileName, 'r')
         fread = self.fread
         line = fread.readline()
         info = line.split()
         width = int(info[1])
         height = int(info[2])
+        fileLock.release()
         while True:
             old_bulbs = []
             old_suns = []
@@ -256,10 +259,13 @@ global img
 global width
 global height
 global pixBuff
-global imgLock
-pygame.init()
+global fileLock
 global square
 global screen
+
+fileLock = threading.Lock()
+pygame.init()
+
 width = 1
 height = 1
 square = pygame.Surface((1,1))
@@ -274,7 +280,9 @@ objFile = ObjFile()
 objFile.fileName = sys.argv[1]
 objFile.start()
 
-time.sleep(10)
+# Basically waiting on objFile to do its thing.
+fileLock.acquire()
+fileLock.release()
 
 screen = pygame.display.set_mode((width, height))
 
