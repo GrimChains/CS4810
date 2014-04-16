@@ -12,14 +12,27 @@ class Pixel(threading.Thread):
         y = self.y
         global width
         global height
+        global imgLock
         t = float(height - 2 * y) / max(width, height)
+        flipflop = True
         while True:
+            flipflop = not flipflop
             for x in range(width):
+                if (x % 2 == 0) == flipflop:
+                    continue
                 s = float(2 * x - width) / max(width, height)
                 ray = Ray(cameraPos, forward + (right * s) + (up * t))
                 col = trace(ray, objs)
                 if col.x != -1 and col.y != -1 and col.z != -1:
-                    square.fill((int(col.x), int(col.y), int(col.z)))
+                    try:
+                        square.fill((min(int(col.x),255), min(int(col.y),255), min(int(col.z),255)))
+                    except Exception:
+                        imgLock.acquire()
+                        print min(int(col.x),255)
+                        print min(int(col.y),255)
+                        print min(int(col.z),255)
+                        print "=========="
+                        imgLock.release()
                 else:
                     square.fill((0, 0, 0))
                 draw_me = pygame.Rect((x, y, 1, 1))
@@ -98,7 +111,7 @@ class ObjFile(threading.Thread):
             if old_bulbs != bulbs:
                 bulbs = copy.deepcopy(old_bulbs)
             if old_suns != suns:
-                suns = copy.deepcopy(suns)
+                suns = copy.deepcopy(old_suns)
             if old_objs != objs:
                 objs = copy.deepcopy(old_objs)
             time.sleep(1)
