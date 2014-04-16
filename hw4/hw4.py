@@ -10,28 +10,23 @@ class Pixel(threading.Thread):
 
     def run(self):
         y = self.y
-        global img
         global width
         global height
-        global imgLock
         t = float(height - 2 * y) / max(width, height)
         while True:
             for x in range(width):
                 s = float(2 * x - width) / max(width, height)
                 ray = Ray(cameraPos, forward + (right * s) + (up * t))
                 col = trace(ray, objs)
-                if col.x != -1 and col.y != -1 and col.z != -1 :
-                    #imgLock.acquire()
+                if col.x != -1 and col.y != -1 and col.z != -1:
                     square.fill((int(col.x), int(col.y), int(col.z)))
                 else:
                     square.fill((0, 0, 0))
                 draw_me = pygame.Rect((x, y, 1, 1))
                 screen.blit(square, draw_me)
-                #imgLock.release()
-           # time.sleep(0.1)
 
 
-class ObjFile( threading.Thread ):
+class ObjFile(threading.Thread):
 
     def run( self ):
         global fileLock
@@ -162,7 +157,8 @@ def ray_sphere(p0, d, sph):
 
     return t1, t2
 
-class Sphere( object ):
+
+class Sphere(object):
 
         def __init__(self, center, radius, color):
                 self.c = center
@@ -183,7 +179,8 @@ class Sphere( object ):
         def normal(self, b):
                 return (b - self.c).normal()
 
-class Plane( object ):
+
+class Plane(object):
 
         def __init__(self, point, normal, color):
                 self.n = normal
@@ -198,19 +195,22 @@ class Plane( object ):
                         d = (self.p - l.o).dot(self.n) / d
                         return Intersection(l.o+l.d*d, d, self.n, self)
 
-class Ray( object ):
+
+class Ray(object):
 
         def __init__(self, origin, direction):
                 self.o = origin
                 self.d = direction
 
-class Intersection( object ):
+
+class Intersection(object):
 
         def __init__(self, point, distance, normal, obj):
                 self.p = point
                 self.d = distance
                 self.n = normal
                 self.obj = obj
+
 
 def testRay(ray, objects, ignore=None):
     intersect = Intersection( Vector(0,0,0), -1, Vector(0,0,0), None)
@@ -223,6 +223,7 @@ def testRay(ray, objects, ignore=None):
             elif 0 < currentIntersect.d < intersect.d:
                 intersect = currentIntersect
     return intersect
+
 
 def trace(ray, objects):
     global suns
@@ -255,7 +256,6 @@ t0 = time.time()
 global objs
 global suns
 global bulbs
-global img
 global width
 global height
 global pixBuff
@@ -263,9 +263,9 @@ global fileLock
 global square
 global screen
 
-fileLock = threading.Lock()
 pygame.init()
-
+fileLock = threading.Lock()
+sensitivity = 0.05
 width = 1
 height = 1
 square = pygame.Surface((1,1))
@@ -291,13 +291,14 @@ up = Vector( 0.0, 1.0, 0.0 )
 right = Vector( 1.0, 0.0, 0.0 )
 
 
-print time.time() - t0
-
+# Thread factory
 for y in range(height):
     px = Pixel()
     px.y = y
     px.start()
-print time.time() - t0
+
+
+# Used for frame limiting
 clock = pygame.time.Clock()
 while True:
     pygame.display.flip()
@@ -308,17 +309,17 @@ while True:
         elif event.type == pygame.KEYDOWN:
             print event.key
             if event.key == pygame.K_w:
-                cameraPos = Vector(cameraPos.x, cameraPos.y, -0.1+cameraPos.z)
+                cameraPos = Vector(cameraPos.x, cameraPos.y, -sensitivity+cameraPos.z)
             elif event.key == pygame.K_s:
-                cameraPos = Vector(cameraPos.x, cameraPos.y, 0.1+cameraPos.z)
+                cameraPos = Vector(cameraPos.x, cameraPos.y, sensitivity+cameraPos.z)
             elif event.key == pygame.K_a:
-                cameraPos = Vector(-0.1+cameraPos.x, cameraPos.y, cameraPos.z)
+                cameraPos = Vector(-sensitivity+cameraPos.x, cameraPos.y, cameraPos.z)
             elif event.key == pygame.K_d:
-                cameraPos = Vector(+0.1+cameraPos.x, cameraPos.y, cameraPos.z)
+                cameraPos = Vector(sensitivity+cameraPos.x, cameraPos.y, cameraPos.z)
             elif event.key == pygame.K_LCTRL:
-                cameraPos = Vector(cameraPos.x, -0.1+cameraPos.y, cameraPos.z)
+                cameraPos = Vector(cameraPos.x, -sensitivity+cameraPos.y, cameraPos.z)
             elif event.key == pygame.K_SPACE:
-                cameraPos = Vector(cameraPos.x, 0.1+cameraPos.y, cameraPos.z)
+                cameraPos = Vector(cameraPos.x, sensitivity+cameraPos.y, cameraPos.z)
             elif event.key == pygame.K_ESCAPE:
                 pygame.quit()
                 sys.exit()
