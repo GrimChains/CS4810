@@ -211,7 +211,7 @@ class Rectangle(object):
 						d = (self.p - l.o).dot(self.n) / d
 						point = l.o+l.d*d;
 
-						if (point.x >= self.minX && point.x <= self.maxX && point.y >= self.minY && point.y <= self.maxY && point.z >= self.minZ && point.z <= self.maxZ) :
+						if (point.x >= self.minX and point.x <= self.maxX and point.y >= self.minY and point.y <= self.maxY and point.z >= self.minZ and point.z <= self.maxZ) :
 							return Intersection(l.o+l.d*d, d, self.n, self)
 						else :
 							return Intersection( Vector(0,0,0), -1, Vector(0,0,0), self)
