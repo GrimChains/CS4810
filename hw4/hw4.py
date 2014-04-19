@@ -191,16 +191,20 @@ def ray_sphere(p0, d, sph):
 
 
 class Rectangle(object):
-	def __init__(self, point, normal, color, minX, maxX, minY, maxY, minZ, maxZ):
-		self.point = point
-		self.normal = normal
-		self.color = color
-		self.minX = minX;
-		self.maxX = maxX;
-		self.minY = minY;
-		self.maxY = maxY;
-		self.minZ = minZ;
-		self.maxZ = maxZ;
+	def __init__(self, point, normal, color, mix, max, miy, may, miz, maz):
+		self.p = point
+		self.n = normal
+		self.col = color
+		self.minX = mix;
+		self.maxX = max;
+		self.minY = miy;
+		self.maxY = may;
+		self.minZ = miz;
+		self.maxZ = maz;
+
+		print(str(self.minX) + ', ' + str(self.maxX));
+		print(str(self.minY) + ', ' + str(self.maxY));
+		print(str(self.minZ) + ', ' + str(self.maxZ));
 
 
 	def intersection(self, l):
@@ -210,6 +214,8 @@ class Rectangle(object):
 				else:
 						d = (self.p - l.o).dot(self.n) / d
 						point = l.o+l.d*d;
+
+						#print(str(point.x) + ", " + str(point.y) + ", " + str(point.z));
 
 						if (point.x >= self.minX and point.x <= self.maxX and point.y >= self.minY and point.y <= self.maxY and point.z >= self.minZ and point.z <= self.maxZ) :
 							return Intersection(l.o+l.d*d, d, self.n, self)
