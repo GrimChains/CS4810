@@ -10,13 +10,10 @@ class Pixel(threading.Thread):
 
     def run(self):
         y = self.y
-        global width
-        global height
-        global imgLock
-        global screen
+        global width,height, screen, errorLock, running
         flipflop = self.flipflop
         t = float(height - 2 * y) / max(width, height)
-        while True:
+        while running:
             flipflop = not flipflop
             for x in range(width):
                 rect = pygame.Rect(x, y, 1, 1)
@@ -29,11 +26,9 @@ class Pixel(threading.Thread):
                     try:
                         screen.fill((min(int(col.x),255), min(int(col.y),255), min(int(col.z),255)), rect)
                     except Exception:
-                        imgLock.acquire()
-                        print min(int(col.x),255)
-                        print min(int(col.y),255)
-                        print min(int(col.z),255)
-                        print "=========="
+                        errorLock.acquire()
+                        print "Failed to fill pixel " + str(x) + " " + str(y)
+                        errorLock.release()
                 else:
                     screen.fill((0, 0, 0), rect)
 
@@ -47,6 +42,7 @@ class ObjFile(threading.Thread):
         global objs
         global width
         global height
+        global running
         fileLock.acquire()
         self.fread = open(self.fileName, 'r')
         fread = self.fread
@@ -55,7 +51,7 @@ class ObjFile(threading.Thread):
         width = int(info[1])
         height = int(info[2])
         fileLock.release()
-        while True:
+        while running:
             old_bulbs = []
             old_suns = []
             old_objs = []
@@ -274,6 +270,7 @@ class Intersection(object):
 def testRay(ray, objects, ignore=None):
     intersect = Intersection( Vector(0,0,0), -1, Vector(0,0,0), None)
 
+    tempo = time.time()
     for obj in objects:
         if obj is not ignore:
             currentIntersect = obj.intersection(ray)
@@ -281,6 +278,8 @@ def testRay(ray, objects, ignore=None):
                 intersect = currentIntersect
             elif 0 < currentIntersect.d < intersect.d:
                 intersect = currentIntersect
+    if time.time() - tempo > 0.2:
+        print intersect.obj
     return intersect
 
 
@@ -311,23 +310,24 @@ def trace(ray, objects):
                 col = Vector( col.x + intersect.obj.col.x * s[3] * max(intersect.n.dot(lightDir), 0), col.y + intersect.obj.col.y * s[4] * max(intersect.n.dot(lightDir), 0), col.z + intersect.obj.col.z * s[5] * max(intersect.n.dot(lightDir), 0))
     return col
 
-t0 = time.time()
 global objs
 global suns
 global bulbs
 global width
 global height
-global pixBuff
 global fileLock
-global square
 global screen
+global errorLock
+global running
+
+running = True
 
 pygame.init()
 fileLock = threading.Lock()
+errorLock = threading.Lock()
 sensitivity = 0.05
 width = 1
 height = 1
-square = pygame.Surface((1,1))
 imgLock = threading.Lock()
 pixBuff = []
 objs = []
@@ -352,6 +352,7 @@ right = Vector( 1.0, 0.0, 0.0 )
 
 # Thread factory
 flip = True
+running = True
 for y in range(height):
     px = Pixel()
     px.flipflop = flip
@@ -366,10 +367,12 @@ while True:
     pygame.display.flip()
     for event in pygame.event.get():
         if event.type==pygame.QUIT:
+            running = False
+            while threading.activeCount() > 1:
+                pass
             pygame.quit()
             sys.exit()
         elif event.type == pygame.KEYDOWN:
-            print event.key
             if event.key == pygame.K_w:
                 cameraPos = Vector(cameraPos.x, cameraPos.y, -sensitivity+cameraPos.z)
             elif event.key == pygame.K_s:
@@ -383,6 +386,9 @@ while True:
             elif event.key == pygame.K_SPACE:
                 cameraPos = Vector(cameraPos.x, sensitivity+cameraPos.y, cameraPos.z)
             elif event.key == pygame.K_ESCAPE:
+                running = False
+                while threading.activeCount() > 1:
+                    pass
                 pygame.quit()
                 sys.exit()
-    #clock.tick(10) # lock framerate to 10 fps.
+    #clock.tick(5) # lock framerate to 10 fps.
