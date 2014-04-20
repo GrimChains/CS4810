@@ -10,27 +10,14 @@ class Pixel(threading.Thread):
 
     def run(self):
         y = self.y
-        global width,height, screen, errorLock, running
-        flipflop = self.flipflop
+        global width,height, screen, errorLock, running, cameraPos, forward, right, up
         t = float(height - 2 * y) / max(width, height)
         while running:
-            flipflop = not flipflop
             for x in range(width):
-                rect = pygame.Rect(x, y, 1, 1)
-                if (x % 2 == 0) == flipflop:
-                    continue
                 s = float(2 * x - width) / max(width, height)
                 ray = Ray(cameraPos, forward + (right * s) + (up * t))
                 col = trace(ray, objs)
-                if col.x != -1 and col.y != -1 and col.z != -1:
-                    try:
-                        screen.fill((min(int(col.x),255), min(int(col.y),255), min(int(col.z),255)), rect)
-                    except Exception:
-                        errorLock.acquire()
-                        print "Failed to fill pixel " + str(x) + " " + str(y)
-                        errorLock.release()
-                else:
-                    screen.fill((0, 0, 0), rect)
+                screen.fill((max(min(int(col.x),255),0), max(min(int(col.y),255),0), max(min(int(col.z),255),0)), pygame.Rect(x,y,1,1))
 
 
 class ObjFile(threading.Thread):
@@ -162,29 +149,6 @@ class Vector(object):
                 return Vector(self.x*b, self.y*b, self.z*b)
 
 
-def ray_sphere(p0, d, sph):
-
-    pc = sph.c
-    r = sph.r
-
-    p0c = p0 - pc
-
-    a = d.dot(d)
-    b = (d * 2).dot(p0 - pc)
-    c = p0c.dot(p0c) - r**2
-
-    try:
-        t1 = (-b + math.sqrt(b**2 - 4*a*c))/(2*a)
-    except ValueError:
-        t1 = None
-    try:
-        t2 = (-b - math.sqrt(b**2 - 4*a*c))/(2*a)
-    except ValueError:
-        t2 = None
-
-    return t1, t2
-
-
 class Rectangle(object):
     def __init__(self, point, normal, color, minX, maxX, minY, maxY, minZ, maxZ):
         self.point = point
@@ -220,13 +184,26 @@ class Sphere(object):
                 self.col = color
 
         def intersection(self, l):
-                points = ray_sphere(l.o, l.d, self)
-                if points == (None, None):
+                p0c = l.o - self.c
+
+                a = l.d.dot(l.d)
+                b = (l.d * 2).dot(l.o - self.c)
+                c = p0c.dot(p0c) - self.r**2
+
+                try:
+                    t1 = (-b + math.sqrt(b**2 - 4*a*c))/(2*a)
+                except ValueError:
+                    t1 = None
+                try:
+                    t2 = (-b - math.sqrt(b**2 - 4*a*c))/(2*a)
+                except ValueError:
+                    t2 = None
+                if t1 is None and t2 is None:
                     return Intersection( Vector(0,0,0), -1, Vector(0,0,0), self)
-                elif points[0] != None and points[1] != None:
-                    t = min(points)
+                elif t1 is not None and t2 is not None:
+                    t = min(t1, t2)
                 else:
-                    t = max(points)
+                    t = max(t1, t2)
                 return Intersection( (l.o + l.d * t), math.sqrt( (l.d.x * t)**2 + (l.d.y * t)**2 + (l.d.z * t)**2), self.normal(l.o + l.d*t), self )
 
 
@@ -250,7 +227,6 @@ class Plane(object):
                 return Intersection(l.o+l.d*d, d, self.n, self)
 
 
-
 class Ray(object):
 
         def __init__(self, origin, direction):
@@ -270,7 +246,6 @@ class Intersection(object):
 def testRay(ray, objects, ignore=None):
     intersect = Intersection( Vector(0,0,0), -1, Vector(0,0,0), None)
 
-    tempo = time.time()
     for obj in objects:
         if obj is not ignore:
             currentIntersect = obj.intersection(ray)
@@ -278,8 +253,6 @@ def testRay(ray, objects, ignore=None):
                 intersect = currentIntersect
             elif 0 < currentIntersect.d < intersect.d:
                 intersect = currentIntersect
-    if time.time() - tempo > 0.2:
-        print intersect.obj
     return intersect
 
 
@@ -287,10 +260,11 @@ def trace(ray, objects):
     global suns
     global bulbs
     global cameraPos
+    tempo = time.time()
     intersect = testRay(ray, objects)
-    if intersect.d == -1 or intersect.p.z < -10000000:
+    if intersect.d == -1 or intersect.p.z < -100:
         return Vector(-1,-1,-1)
-    else :
+    else:
         eyeDir = Vector( cameraPos.x - intersect.p.x, cameraPos.y - intersect.p.y, cameraPos.z - intersect.p.z)
         if intersect.n.dot(eyeDir) < 0 :
             intersect.n = intersect.n * -1
@@ -299,7 +273,7 @@ def trace(ray, objects):
             lightDir = Vector( b[0] - intersect.p.x, b[1] - intersect.p.y, b[2] - intersect.p.z).normal()
             ray = Ray( intersect.p, lightDir )
             inter = testRay( ray, objects, intersect.obj)
-            dist = math.sqrt( pow( intersect.p.x - b[0], 2) + pow( intersect.p.y - b[1], 2) + pow( intersect.p.z - b[2], 2) )
+            dist = math.sqrt( (intersect.p.x - b[0])**2 + (intersect.p.y - b[1])**2 + (intersect.p.z - b[2])**2 )
             if inter.d == -1 or inter.d > dist:
                 col = Vector( col.x + intersect.obj.col.x * b[3] * max(intersect.n.dot(lightDir), 0), col.y + intersect.obj.col.y * b[4] * max(intersect.n.dot(lightDir), 0), col.z + intersect.obj.col.z * b[5] * max(intersect.n.dot(lightDir), 0))
         for s in suns:
@@ -308,6 +282,8 @@ def trace(ray, objects):
             inter = testRay( ray, objs, intersect.obj)
             if inter.d == -1:
                 col = Vector( col.x + intersect.obj.col.x * s[3] * max(intersect.n.dot(lightDir), 0), col.y + intersect.obj.col.y * s[4] * max(intersect.n.dot(lightDir), 0), col.z + intersect.obj.col.z * s[5] * max(intersect.n.dot(lightDir), 0))
+    if time.time() - tempo > 0.013:
+        pass#print "a"
     return col
 
 global objs
