@@ -4,6 +4,7 @@ import copy
 import threading
 import time
 import pygame
+from numbers import Number
 
 
 class Pixel(threading.Thread):
@@ -122,6 +123,12 @@ class ObjFile(threading.Thread):
                     bVerts= sorted(bVerts, key=lambda vert: vert.z)
                     old_objs.append( Rectangle(Vector(red, green, blue), bVerts[0], bVerts[1], bVerts[2], bVerts[3]))
                     old_objs.append( Rectangle(Vector(red, green, blue), bVerts[4], bVerts[5], bVerts[6], bVerts[7]))
+                elif parse[0] == "triangle":
+                    v0 = (float(parse[1]), float(parse[2]), float(parse[3]))
+                    v1 = (float(parse[4]), float(parse[5]), float(parse[6]))
+                    v2 = (float(parse[7]), float(parse[8]), float(parse[9]))
+                    tri_color = Vector(255*float(parse[10]), 255*float(parse[11]), 255*float(parse[12]))
+                    old_objs.append(Triangle(v0, v1, v2, tri_color))
                 line = fread.readline()
             fread.seek(0)
             if old_bulbs != bulbs:
@@ -156,7 +163,10 @@ class Vector(object):
         return Vector(self.x/mag,self.y/mag,self.z/mag)
 
     def __add__(self, b):
-        return Vector(self.x + b.x, self.y+b.y, self.z+b.z)
+        if isinstance(b, Vector):
+            return Vector(self.x + b.x, self.y+b.y, self.z+b.z)
+        elif isinstance(b, Number):
+            return Vector(self.x + b, self.y + b, self.z + b)
 
     def __sub__(self, b):
         return Vector(self.x-b.x, self.y-b.y, self.z-b.z)
@@ -273,6 +283,58 @@ class Plane(object):
         else:
             d = (self.p - l.o).dot(self.n) / d
             return Intersection(l.o+l.d*d, d, self.n, self)
+
+
+class Triangle(object):
+    def __init__(self, v0, v1, v2, color):
+        self.v0 = Vector(v0[0], v0[1], v0[2])
+        self.v1 = Vector(v1[0], v1[1], v1[2])
+        self.v2 = Vector(v2[0], v2[1], v2[2])
+        self.col = color
+
+    def normal(self):
+        v0v1 = self.v1 - self.v0
+        v0v2 = self.v2 - self.v0
+        cross = v0v1.cross(v0v2)
+        return Vector(cross[0], cross[1], cross[2])
+
+    def intersection(self, l):
+        origin = l.o
+        v = l.d
+        d = self.normal().dot(self.v0)
+        if self.normal().dot(v) == 0:
+            return Intersection(Vector(0, 0, 0), -1, Vector(0, 0, 0), self)
+            # return None
+
+        t = - (self.normal().dot(origin) + d) / self.normal().dot(v)
+        p = origin + (v * t)
+
+        edge0 = self.v1 - self.v0
+        vp0 = p - self.v0
+        c = edge0.cross(vp0)
+        c = Vector(c[0], c[1], c[2])
+        if self.normal().dot(c) < 0:
+            return Intersection(Vector(0, 0, 0), -1, Vector(0, 0, 0), self)
+            # return None
+
+        edge1 = self.v2 - self.v1
+        vp1 = p - self.v1
+        c = edge1.cross(vp1)
+        c = Vector(c[0], c[1], c[2])
+        if self.normal().dot(c) < 0:
+            return Intersection(Vector(0, 0, 0), -1, Vector(0, 0, 0), self)
+            # return None
+
+        edge2 = self.v0 - self.v2
+        vp2 = p - self.v2
+        c = edge2.cross(vp2)
+        c = Vector(c[0], c[1], c[2])
+        if self.normal().dot(c) < 0:
+            return Intersection(Vector(0, 0, 0), -1, Vector(0, 0, 0), self)
+            # return None
+
+        # Intersection(point, distance, normal, obj)
+        return Intersection(Vector(p.x, p.y, p.z), p.magnitude(), self.normal(), self)
 
 
 class Ray(object):
