@@ -171,19 +171,19 @@ class Rectangle(object):
 
         rVerts = [ v1, v2, v3, v4 ]
 
-        line1 = None;
-        line2 = None;
+        line1 = None
+        line2 = None
 
         rVerts = sorted(rVerts, key=lambda vert: vert.x)
-        self.minX = rVerts[0].x;
-        self.maxX = rVerts[3].x;
+        self.minX = rVerts[0].x
+        self.maxX = rVerts[3].x
 
         if (self.minX != self.maxX):
             line1 = Vector(rVerts[1].x - rVerts[0].x, rVerts[1].y - rVerts[0].y, rVerts[1].z - rVerts[0].z)
 
         rVerts = sorted(rVerts, key=lambda vert: vert.y)
-        self.minY = rVerts[0].y;
-        self.maxY = rVerts[3].y;
+        self.minY = rVerts[0].y
+        self.maxY = rVerts[3].y
 
         if (self.minY != self.maxY):
             if (line1):
@@ -192,8 +192,8 @@ class Rectangle(object):
                 line1 = Vector(rVerts[1].x - rVerts[0].x, rVerts[1].y - rVerts[0].y, rVerts[1].z - rVerts[0].z)
 
         rVerts = sorted(rVerts, key=lambda vert: vert.z)
-        self.minZ = rVerts[0].z;
-        self.maxZ = rVerts[3].z;
+        self.minZ = rVerts[0].z
+        self.maxZ = rVerts[3].z
 
         if (self.minZ != self.maxZ):
             if (line1 == None):
@@ -201,9 +201,9 @@ class Rectangle(object):
             elif(line2 == None):
                 line2 = Vector(rVerts[1].x - rVerts[0].x, rVerts[1].y - rVerts[0].y, rVerts[1].z - rVerts[0].z)
 
-        normalTmp = line2.cross(line1);
-        self.n = Vector(normalTmp[0], normalTmp[1], normalTmp[2]).normal();
-        self.p = rVerts[0];
+        normalTmp = line2.cross(line1)
+        self.n = Vector(normalTmp[0], normalTmp[1], normalTmp[2]).normal()
+        self.p = rVerts[0]
 
 
     def intersection(self, l):
@@ -212,7 +212,7 @@ class Rectangle(object):
             return Intersection( Vector(0,0,0), -1, Vector(0,0,0), self)
         else:
             d = (self.p - l.o).dot(self.n) / d
-            point = l.o+l.d*d;
+            point = l.o+l.d*d
 
             if (point.x >= self.minX and point.x <= self.maxX and point.y >= self.minY and point.y <= self.maxY and point.z >= self.minZ and point.z <= self.maxZ) :
                 return Intersection(l.o+l.d*d, d, self.n, self)
