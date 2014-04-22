@@ -122,23 +122,6 @@ class ObjFile(threading.Thread):
                     bVerts= sorted(bVerts, key=lambda vert: vert.z)
                     old_objs.append( Rectangle(Vector(red, green, blue), bVerts[0], bVerts[1], bVerts[2], bVerts[3]))
                     old_objs.append( Rectangle(Vector(red, green, blue), bVerts[4], bVerts[5], bVerts[6], bVerts[7]))
-                #elif parse[0] == "eye" :
-                #    x = float(parse[1])
-                #    y = float(parse[2])
-                #    z = float(parse[3])
-                #    cameraPos = Vector( x, y, z )
-                #elif parse[0] == "forward" :
-                #    forward = Vector( float(parse[1]), float(parse[2]), float(parse[3]))
-                #    tmp = forward.cross(up)
-                #    right = Vector( tmp[0], tmp[1], tmp[2]).normal()
-                #    tmp = right.cross(forward)
-                #    up = Vector( tmp[0], tmp[1], tmp[2] ).normal()
-                #elif parse[0] == "up" :
-                #    temp = Vector( float(parse[1]), float(parse[2]), float(parse[3]))
-                #    tmp = forward.cross(temp)
-                #    right = Vector( tmp[0], tmp[1], tmp[2]).normal()
-                #    tmp = right.cross(forward)
-                #    up = Vector( tmp[0], tmp[1], tmp[2]).normal()
                 line = fread.readline()
             fread.seek(0)
             if old_bulbs != bulbs:
@@ -377,9 +360,11 @@ bulbs = []
 verts = []
 cameraPos = Vector(0,0,0)
 
+print "Now reading ", sys.argv[1], "..."
 objFile = ObjFile()
 objFile.fileName = sys.argv[1]
 objFile.start()
+print "Done reading file."
 
 # Basically waiting on objFile to do its thing.
 fileLock.acquire()
@@ -391,23 +376,21 @@ forward = Vector( 0.0, 0.0, -1.0 )
 up = Vector( 0.0, 1.0, 0.0 )
 right = Vector( 1.0, 0.0, 0.0 )
 
-
+print "Now starting threads... (This may take awhile)"
 # Thread factory
 running = True
 running = True
 for x in range(40):
     for y in range(20):
         px = Pixel()
-        px.x = int(float(x)*float(width)/40.0)#float(width))
+        px.x = int(float(x)*float(width)/40.0)
         px.x_bound = px.x + width/40
-        px.y = int(float(y)*float(height)/20.0)#float(height))
+        px.y = int(float(y)*float(height)/20.0)
         px.y_bound = px.y + height/20
         #print x, y, "\t|\t", px.x, px.y, "\t\t|\t", px.x_bound, px.y_bound
         px.start()
+print "Done starting threads."
 
-
-# Used for frame limiting
-clock = pygame.time.Clock()
 while True:
     pygame.display.flip()
     for event in pygame.event.get():
