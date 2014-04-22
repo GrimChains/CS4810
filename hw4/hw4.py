@@ -4,6 +4,7 @@ import copy
 import threading
 import time
 import pygame
+import hashlib
 from numbers import Number
 
 
@@ -42,6 +43,10 @@ class ObjFile(threading.Thread):
 		global height
 		global running
 		global verts
+		global cache
+		global oldHash
+		global lastCacheReset
+
 		fileLock.acquire()
 		self.fread = open(self.fileName, 'r')
 		fread = self.fread
@@ -56,95 +61,113 @@ class ObjFile(threading.Thread):
 				old_suns = []
 				old_objs = []
 				old_verts = []
+
+				fileList = []
+				fileString = "";
 				line = fread.readline()
 				while line != "":
-					parse = line.split()
-					if parse == []:
-						pass
-					elif parse[0] == "bulb" :
-						x = float(parse[1])
-						y = float(parse[2])
-						z = float(parse[3])
-						old_bulbs.append([x, y, z, float(parse[4]), float(parse[5]), float(parse[6])])
-					elif parse[0] == "sun" :
-						old_suns.append([float(parse[1]), float(parse[2]), float(parse[3]), float(parse[4]), float(parse[5]), float(parse[6])])
-					elif parse[0] == "plane" :
-						x = float(parse[1])
-						y = float(parse[2])
-						z = float(parse[3])
-						d = float(parse[4])
-						if x != 0:
-							old_objs.append( Plane( Vector( (-d/x), 0, 0), Vector( x, y, z), Vector(255*float(parse[5]), 255*float(parse[6]), 255*float(parse[7]))) )
-						elif y != 0 :
-							old_objs.append( Plane( Vector( 0, (-d/y), 0), Vector( x, y, z), Vector(255*float(parse[5]), 255*float(parse[6]), 255*float(parse[7]))) )
-						elif z != 0 :
-							old_objs.append( Plane( Vector( 0, 0, (-d/z) ), Vector( x, y, z), Vector(255*float(parse[5]), 255*float(parse[6]), 255*float(parse[7]))) )
-					elif parse[0] == "sphere" :
-						x = float(parse[1])
-						y = float(parse[2])
-						z = float(parse[3])
-						r = float(parse[4])
-						old_objs.append( Sphere( Vector( x, y, z), r, Vector(float(parse[5])*255.0, float(parse[6])*255.0, float(parse[7])*255.0)))
-					elif parse[0] == "vertex":
-						x = float(parse[1])
-						y = float(parse[2])
-						z = float(parse[3])
-
-						old_verts.append( Vector(x, y ,z))
-					elif parse[0] == "rect":
-						red = 255*float(parse[1])
-						green = 255*float(parse[2])
-						blue = 255*float(parse[3])
-
-						v1 = old_verts[int(parse[4])]
-						v2 = old_verts[int(parse[5])]
-						v3 = old_verts[int(parse[6])]
-						v4 = old_verts[int(parse[7])]
-
-						old_objs.append( Rectangle(Vector(red, green, blue), v1, v2, v3, v4))
-					elif parse[0] == "box" :
-						red = 255*float(parse[1])
-						green = 255*float(parse[2])
-						blue = 255*float(parse[3])
-
-						v1 = old_verts[int(parse[4])]
-						v2 = old_verts[int(parse[5])]
-						v3 = old_verts[int(parse[6])]
-						v4 = old_verts[int(parse[7])]
-						v5 = old_verts[int(parse[8])]
-						v6 = old_verts[int(parse[9])]
-						v7 = old_verts[int(parse[10])]
-						v8 = old_verts[int(parse[11])]
-
-						bVerts = [ v1, v2, v3, v4, v5, v6, v7, v8 ]
-
-						bVerts= sorted(bVerts, key=lambda vert: vert.x)
-						old_objs.append( Rectangle(Vector(red, green, blue), bVerts[0], bVerts[1], bVerts[2], bVerts[3]))
-						old_objs.append( Rectangle(Vector(red, green, blue), bVerts[4], bVerts[5], bVerts[6], bVerts[7]))
-
-						bVerts= sorted(bVerts, key=lambda vert: vert.y)
-						old_objs.append( Rectangle(Vector(red, green, blue), bVerts[0], bVerts[1], bVerts[2], bVerts[3]))
-						old_objs.append( Rectangle(Vector(red, green, blue), bVerts[4], bVerts[5], bVerts[6], bVerts[7]))
-
-						bVerts= sorted(bVerts, key=lambda vert: vert.z)
-						old_objs.append( Rectangle(Vector(red, green, blue), bVerts[0], bVerts[1], bVerts[2], bVerts[3]))
-						old_objs.append( Rectangle(Vector(red, green, blue), bVerts[4], bVerts[5], bVerts[6], bVerts[7]))
-					elif parse[0] == "triangle":
-						v0 = (float(parse[1]), float(parse[2]), float(parse[3]))
-						v1 = (float(parse[4]), float(parse[5]), float(parse[6]))
-						v2 = (float(parse[7]), float(parse[8]), float(parse[9]))
-						tri_color = Vector(255*float(parse[10]), 255*float(parse[11]), 255*float(parse[12]))
-						old_objs.append(Triangle(v0, v1, v2, tri_color))
+					fileList.append(line);
+					fileString += line;
 					line = fread.readline()
 				fread.seek(0)
-				if old_bulbs != bulbs:
-					bulbs = copy.deepcopy(old_bulbs)
-				if old_suns != suns:
-					suns = copy.deepcopy(old_suns)
-				if old_objs != objs:
-					objs = copy.deepcopy(old_objs)
-				if old_verts != verts:
-					verts = copy.deepcopy(old_verts)
+
+				m = hashlib.md5();
+				m.update(fileString);
+				hash = m.digest();
+
+				if (hash != oldHash):
+					for line in fileList:
+						parse = line.split()
+						if parse == []:
+							pass
+						elif parse[0] == "bulb" :
+							x = float(parse[1])
+							y = float(parse[2])
+							z = float(parse[3])
+							old_bulbs.append([x, y, z, float(parse[4]), float(parse[5]), float(parse[6])])
+						elif parse[0] == "sun" :
+							old_suns.append([float(parse[1]), float(parse[2]), float(parse[3]), float(parse[4]), float(parse[5]), float(parse[6])])
+						elif parse[0] == "plane" :
+							x = float(parse[1])
+							y = float(parse[2])
+							z = float(parse[3])
+							d = float(parse[4])
+							if x != 0:
+								old_objs.append( Plane( Vector( (-d/x), 0, 0), Vector( x, y, z), Vector(255*float(parse[5]), 255*float(parse[6]), 255*float(parse[7]))) )
+							elif y != 0 :
+								old_objs.append( Plane( Vector( 0, (-d/y), 0), Vector( x, y, z), Vector(255*float(parse[5]), 255*float(parse[6]), 255*float(parse[7]))) )
+							elif z != 0 :
+								old_objs.append( Plane( Vector( 0, 0, (-d/z) ), Vector( x, y, z), Vector(255*float(parse[5]), 255*float(parse[6]), 255*float(parse[7]))) )
+						elif parse[0] == "sphere" :
+							x = float(parse[1])
+							y = float(parse[2])
+							z = float(parse[3])
+							r = float(parse[4])
+							old_objs.append( Sphere( Vector( x, y, z), r, Vector(float(parse[5])*255.0, float(parse[6])*255.0, float(parse[7])*255.0)))
+						elif parse[0] == "vertex":
+							x = float(parse[1])
+							y = float(parse[2])
+							z = float(parse[3])
+
+							old_verts.append( Vector(x, y ,z))
+						elif parse[0] == "rect":
+							red = 255*float(parse[1])
+							green = 255*float(parse[2])
+							blue = 255*float(parse[3])
+
+							v1 = old_verts[int(parse[4])]
+							v2 = old_verts[int(parse[5])]
+							v3 = old_verts[int(parse[6])]
+							v4 = old_verts[int(parse[7])]
+
+							old_objs.append( Rectangle(Vector(red, green, blue), v1, v2, v3, v4))
+						elif parse[0] == "box" :
+							red = 255*float(parse[1])
+							green = 255*float(parse[2])
+							blue = 255*float(parse[3])
+
+							v1 = old_verts[int(parse[4])]
+							v2 = old_verts[int(parse[5])]
+							v3 = old_verts[int(parse[6])]
+							v4 = old_verts[int(parse[7])]
+							v5 = old_verts[int(parse[8])]
+							v6 = old_verts[int(parse[9])]
+							v7 = old_verts[int(parse[10])]
+							v8 = old_verts[int(parse[11])]
+
+							bVerts = [ v1, v2, v3, v4, v5, v6, v7, v8 ]
+
+							bVerts= sorted(bVerts, key=lambda vert: vert.x)
+							old_objs.append( Rectangle(Vector(red, green, blue), bVerts[0], bVerts[1], bVerts[2], bVerts[3]))
+							old_objs.append( Rectangle(Vector(red, green, blue), bVerts[4], bVerts[5], bVerts[6], bVerts[7]))
+
+							bVerts= sorted(bVerts, key=lambda vert: vert.y)
+							old_objs.append( Rectangle(Vector(red, green, blue), bVerts[0], bVerts[1], bVerts[2], bVerts[3]))
+							old_objs.append( Rectangle(Vector(red, green, blue), bVerts[4], bVerts[5], bVerts[6], bVerts[7]))
+
+							bVerts= sorted(bVerts, key=lambda vert: vert.z)
+							old_objs.append( Rectangle(Vector(red, green, blue), bVerts[0], bVerts[1], bVerts[2], bVerts[3]))
+							old_objs.append( Rectangle(Vector(red, green, blue), bVerts[4], bVerts[5], bVerts[6], bVerts[7]))
+						elif parse[0] == "triangle":
+							v0 = (float(parse[1]), float(parse[2]), float(parse[3]))
+							v1 = (float(parse[4]), float(parse[5]), float(parse[6]))
+							v2 = (float(parse[7]), float(parse[8]), float(parse[9]))
+							tri_color = Vector(255*float(parse[10]), 255*float(parse[11]), 255*float(parse[12]))
+							old_objs.append(Triangle(v0, v1, v2, tri_color))
+
+					print("FILE IS DIFFERENT! CLEARING CACHE");
+					cache.clear();
+					oldHash = hash;
+					lastCacheReset = time.time()
+
+					if old_bulbs != bulbs:
+						bulbs = copy.deepcopy(old_bulbs)
+					if old_suns != suns:
+						suns = copy.deepcopy(old_suns)
+					if old_objs != objs:
+						objs = copy.deepcopy(old_objs)
+					if old_verts != verts:
+						verts = copy.deepcopy(old_verts)
 			except Exception:
 				print "There was an error in the object file."
 			time.sleep(1)
@@ -360,6 +383,11 @@ class Intersection(object):
 		self.n = normal
 		self.obj = obj
 
+class CacheObject(object):
+	def __init__(self, hash, color):
+		self.hash = hash
+		self.color = color
+
 def testRay(ray, objects, ignore=None):
 	intersect = Intersection( Vector(0,0,0), -1, Vector(0,0,0), None)
 
@@ -380,6 +408,8 @@ def trace(ray, objects):
 	global cacheHits
 	global cacheMisses
 	global cache
+	global oldHash
+	global lastCacheReset
 
 	tempo = time.time()
 	intersect = testRay(ray, objects)
@@ -390,32 +420,47 @@ def trace(ray, objects):
 		eyeDir = Vector( cameraPos.x - intersect.p.x, cameraPos.y - intersect.p.y, cameraPos.z - intersect.p.z)
 		if intersect.n.dot(eyeDir) < 0 :
 			intersect.n = intersect.n * -1
+
+		#cacheString = str(round(intersect.p.x, 2)) + ", " + str(round(intersect.p.y, 2)) + ", " + str(round(intersect.p.z)) + ", " + str(intersect.n.x) + ", " + str(intersect.n.y) + ", " + str(intersect.n.z)
+		cacheString = str((intersect.p.x, 2)) + ", " + str((intersect.p.y, 2)) + ", " + str((intersect.p.z)) + ", " + str(intersect.n.x) + ", " + str(intersect.n.y) + ", " + str(intersect.n.z)
 		col = Vector( 0, 0, 0 )
 
-		cacheString = str(round(intersect.p.x, 2)) + ", " + str(round(intersect.p.y, 2)) + ", " + str(round(intersect.p.z)) + ", " + str(intersect.n.x) + ", " + str(intersect.n.y) + ", " + str(intersect.n.z)
+		try:
+			cacheObj = cache[cacheString];
 
-		if (cache.get(cacheString)):
-			col = cache[cacheString];
-			cacheHits += 1;
-		else:
-			for b in bulbs:
-				lightDir = Vector( b[0] - intersect.p.x, b[1] - intersect.p.y, b[2] - intersect.p.z).normal()
-				ray = Ray( intersect.p, lightDir )
-				inter = testRay( ray, objects, intersect.obj)
-				dist = math.sqrt( (intersect.p.x - b[0])**2 + (intersect.p.y - b[1])**2 + (intersect.p.z - b[2])**2 )
-				if inter.d == -1 or inter.d > dist:
-					col = Vector( col.x + intersect.obj.col.x * b[3] * max(intersect.n.dot(lightDir), 0), col.y + intersect.obj.col.y * b[4] * max(intersect.n.dot(lightDir), 0), col.z + intersect.obj.col.z * b[5] * max(intersect.n.dot(lightDir), 0))
-			for s in suns:
-				lightDir = Vector( s[0], s[1], s[2] )
-				ray = Ray( intersect.p, lightDir )
-				inter = testRay( ray, objs, intersect.obj)
-				if inter.d == -1:
-					col = Vector( col.x + intersect.obj.col.x * s[3] * max(intersect.n.dot(lightDir), 0), col.y + intersect.obj.col.y * s[4] * max(intersect.n.dot(lightDir), 0), col.z + intersect.obj.col.z * s[5] * max(intersect.n.dot(lightDir), 0))
+			if (cacheObj.hash == oldHash):
+				col = cacheObj.color;
+				cacheHits += 1;
+			else:
+				col = recalculateColor(intersect);
+				cacheMisses += 1;
+		except: # not in cache
+			col = recalculateColor(intersect)
 
-			cache[cacheString] = col;
-			cacheMisses += 1;	
+			if (time.time() - lastCacheReset > 4):
+				cache[cacheString] = CacheObject(oldHash, col);
+
+			cacheMisses += 1;
+
 	if time.time() - tempo > 0.013:
 		pass#print "a"
+	return col
+
+def recalculateColor(intersect):
+	col = Vector( 0, 0, 0 )
+	for b in bulbs:
+		lightDir = Vector( b[0] - intersect.p.x, b[1] - intersect.p.y, b[2] - intersect.p.z).normal()
+		ray = Ray( intersect.p, lightDir )
+		inter = testRay( ray, objects, intersect.obj)
+		dist = math.sqrt( (intersect.p.x - b[0])**2 + (intersect.p.y - b[1])**2 + (intersect.p.z - b[2])**2 )
+		if inter.d == -1 or inter.d > dist:
+			col = Vector( col.x + intersect.obj.col.x * b[3] * max(intersect.n.dot(lightDir), 0), col.y + intersect.obj.col.y * b[4] * max(intersect.n.dot(lightDir), 0), col.z + intersect.obj.col.z * b[5] * max(intersect.n.dot(lightDir), 0))
+	for s in suns:
+		lightDir = Vector( s[0], s[1], s[2] )
+		ray = Ray( intersect.p, lightDir )
+		inter = testRay( ray, objs, intersect.obj)
+		if inter.d == -1:
+			col = Vector( col.x + intersect.obj.col.x * s[3] * max(intersect.n.dot(lightDir), 0), col.y + intersect.obj.col.y * s[4] * max(intersect.n.dot(lightDir), 0), col.z + intersect.obj.col.z * s[5] * max(intersect.n.dot(lightDir), 0))
 	return col
 
 global objs
@@ -433,6 +478,8 @@ global cacheHits
 global cacheMisses
 global totalThreadTime
 global numThreadsCompleted
+global oldHash
+global lastCacheReset
 
 running = True
 
@@ -453,6 +500,8 @@ cacheMisses = 0;
 cacheHits = 0;
 totalThreadTime = 0;
 numThreadsCompleted = 0;
+oldHash = "";
+lastCacheReset = 0;
 cameraPos = Vector(0,0,0)
 
 print "Now reading ", sys.argv[1], "..."
