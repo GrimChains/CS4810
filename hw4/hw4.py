@@ -412,6 +412,7 @@ global verts
 running = True
 
 pygame.init()
+pygame.display.set_caption("Real-time Ray Tracer")
 fileLock = threading.Lock()
 errorLock = threading.Lock()
 sensitivity = 0.05
@@ -449,9 +450,9 @@ for x in range(40):
     for y in range(20):
         px = Pixel()
         px.x = int(float(x)*float(width)/40.0)
-        px.x_bound = px.x + width/40
+        px.x_bound = px.x + width/40 + 1
         px.y = int(float(y)*float(height)/20.0)
-        px.y_bound = px.y + height/20
+        px.y_bound = px.y + height/20 + 1
         #print x, y, "\t|\t", px.x, px.y, "\t\t|\t", px.x_bound, px.y_bound
         px.start()
     print float(x*20 + y + 1)/((40.0*20.0)/100.0), "% done"
