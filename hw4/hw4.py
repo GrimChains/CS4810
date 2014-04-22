@@ -46,99 +46,102 @@ class ObjFile(threading.Thread):
         height = int(info[2])
         fileLock.release()
         while running:
-            old_bulbs = []
-            old_suns = []
-            old_objs = []
-            old_verts = []
-            line = fread.readline()
-            while line != "":
-                parse = line.split()
-                if parse == []:
-                    pass
-                elif parse[0] == "bulb" :
-                    x = float(parse[1])
-                    y = float(parse[2])
-                    z = float(parse[3])
-                    old_bulbs.append([x, y, z, float(parse[4]), float(parse[5]), float(parse[6])])
-                elif parse[0] == "sun" :
-                    old_suns.append([float(parse[1]), float(parse[2]), float(parse[3]), float(parse[4]), float(parse[5]), float(parse[6])])
-                elif parse[0] == "plane" :
-                    x = float(parse[1])
-                    y = float(parse[2])
-                    z = float(parse[3])
-                    d = float(parse[4])
-                    if x != 0:
-                        old_objs.append( Plane( Vector( (-d/x), 0, 0), Vector( x, y, z), Vector(255*float(parse[5]), 255*float(parse[6]), 255*float(parse[7]))) )
-                    elif y != 0 :
-                        old_objs.append( Plane( Vector( 0, (-d/y), 0), Vector( x, y, z), Vector(255*float(parse[5]), 255*float(parse[6]), 255*float(parse[7]))) )
-                    elif z != 0 :
-                        old_objs.append( Plane( Vector( 0, 0, (-d/z) ), Vector( x, y, z), Vector(255*float(parse[5]), 255*float(parse[6]), 255*float(parse[7]))) )
-                elif parse[0] == "sphere" :
-                    x = float(parse[1])
-                    y = float(parse[2])
-                    z = float(parse[3])
-                    r = float(parse[4])
-                    old_objs.append( Sphere( Vector( x, y, z), r, Vector(float(parse[5])*255.0, float(parse[6])*255.0, float(parse[7])*255.0)))
-                elif parse[0] == "vertex":
-                    x = float(parse[1])
-                    y = float(parse[2])
-                    z = float(parse[3])
-
-                    old_verts.append( Vector(x, y ,z))
-                elif parse[0] == "rect":
-                    red = 255*float(parse[1])
-                    green = 255*float(parse[2])
-                    blue = 255*float(parse[3])
-
-                    v1 = old_verts[int(parse[4])]
-                    v2 = old_verts[int(parse[5])]
-                    v3 = old_verts[int(parse[6])]
-                    v4 = old_verts[int(parse[7])]
-
-                    old_objs.append( Rectangle(Vector(red, green, blue), v1, v2, v3, v4))
-                elif parse[0] == "box" :
-                    red = 255*float(parse[1])
-                    green = 255*float(parse[2])
-                    blue = 255*float(parse[3])
-
-                    v1 = old_verts[int(parse[4])]
-                    v2 = old_verts[int(parse[5])]
-                    v3 = old_verts[int(parse[6])]
-                    v4 = old_verts[int(parse[7])]
-                    v5 = old_verts[int(parse[8])]
-                    v6 = old_verts[int(parse[9])]
-                    v7 = old_verts[int(parse[10])]
-                    v8 = old_verts[int(parse[11])]
-
-                    bVerts = [ v1, v2, v3, v4, v5, v6, v7, v8 ]
-
-                    bVerts= sorted(bVerts, key=lambda vert: vert.x)
-                    old_objs.append( Rectangle(Vector(red, green, blue), bVerts[0], bVerts[1], bVerts[2], bVerts[3]))
-                    old_objs.append( Rectangle(Vector(red, green, blue), bVerts[4], bVerts[5], bVerts[6], bVerts[7]))
-
-                    bVerts= sorted(bVerts, key=lambda vert: vert.y)
-                    old_objs.append( Rectangle(Vector(red, green, blue), bVerts[0], bVerts[1], bVerts[2], bVerts[3]))
-                    old_objs.append( Rectangle(Vector(red, green, blue), bVerts[4], bVerts[5], bVerts[6], bVerts[7]))
-
-                    bVerts= sorted(bVerts, key=lambda vert: vert.z)
-                    old_objs.append( Rectangle(Vector(red, green, blue), bVerts[0], bVerts[1], bVerts[2], bVerts[3]))
-                    old_objs.append( Rectangle(Vector(red, green, blue), bVerts[4], bVerts[5], bVerts[6], bVerts[7]))
-                elif parse[0] == "triangle":
-                    v0 = (float(parse[1]), float(parse[2]), float(parse[3]))
-                    v1 = (float(parse[4]), float(parse[5]), float(parse[6]))
-                    v2 = (float(parse[7]), float(parse[8]), float(parse[9]))
-                    tri_color = Vector(255*float(parse[10]), 255*float(parse[11]), 255*float(parse[12]))
-                    old_objs.append(Triangle(v0, v1, v2, tri_color))
+            try:
+                old_bulbs = []
+                old_suns = []
+                old_objs = []
+                old_verts = []
                 line = fread.readline()
-            fread.seek(0)
-            if old_bulbs != bulbs:
-                bulbs = copy.deepcopy(old_bulbs)
-            if old_suns != suns:
-                suns = copy.deepcopy(old_suns)
-            if old_objs != objs:
-                objs = copy.deepcopy(old_objs)
-            if old_verts != verts:
-                verts = copy.deepcopy(old_verts)
+                while line != "":
+                    parse = line.split()
+                    if parse == []:
+                        pass
+                    elif parse[0] == "bulb" :
+                        x = float(parse[1])
+                        y = float(parse[2])
+                        z = float(parse[3])
+                        old_bulbs.append([x, y, z, float(parse[4]), float(parse[5]), float(parse[6])])
+                    elif parse[0] == "sun" :
+                        old_suns.append([float(parse[1]), float(parse[2]), float(parse[3]), float(parse[4]), float(parse[5]), float(parse[6])])
+                    elif parse[0] == "plane" :
+                        x = float(parse[1])
+                        y = float(parse[2])
+                        z = float(parse[3])
+                        d = float(parse[4])
+                        if x != 0:
+                            old_objs.append( Plane( Vector( (-d/x), 0, 0), Vector( x, y, z), Vector(255*float(parse[5]), 255*float(parse[6]), 255*float(parse[7]))) )
+                        elif y != 0 :
+                            old_objs.append( Plane( Vector( 0, (-d/y), 0), Vector( x, y, z), Vector(255*float(parse[5]), 255*float(parse[6]), 255*float(parse[7]))) )
+                        elif z != 0 :
+                            old_objs.append( Plane( Vector( 0, 0, (-d/z) ), Vector( x, y, z), Vector(255*float(parse[5]), 255*float(parse[6]), 255*float(parse[7]))) )
+                    elif parse[0] == "sphere" :
+                        x = float(parse[1])
+                        y = float(parse[2])
+                        z = float(parse[3])
+                        r = float(parse[4])
+                        old_objs.append( Sphere( Vector( x, y, z), r, Vector(float(parse[5])*255.0, float(parse[6])*255.0, float(parse[7])*255.0)))
+                    elif parse[0] == "vertex":
+                        x = float(parse[1])
+                        y = float(parse[2])
+                        z = float(parse[3])
+
+                        old_verts.append( Vector(x, y ,z))
+                    elif parse[0] == "rect":
+                        red = 255*float(parse[1])
+                        green = 255*float(parse[2])
+                        blue = 255*float(parse[3])
+
+                        v1 = old_verts[int(parse[4])]
+                        v2 = old_verts[int(parse[5])]
+                        v3 = old_verts[int(parse[6])]
+                        v4 = old_verts[int(parse[7])]
+
+                        old_objs.append( Rectangle(Vector(red, green, blue), v1, v2, v3, v4))
+                    elif parse[0] == "box" :
+                        red = 255*float(parse[1])
+                        green = 255*float(parse[2])
+                        blue = 255*float(parse[3])
+
+                        v1 = old_verts[int(parse[4])]
+                        v2 = old_verts[int(parse[5])]
+                        v3 = old_verts[int(parse[6])]
+                        v4 = old_verts[int(parse[7])]
+                        v5 = old_verts[int(parse[8])]
+                        v6 = old_verts[int(parse[9])]
+                        v7 = old_verts[int(parse[10])]
+                        v8 = old_verts[int(parse[11])]
+
+                        bVerts = [ v1, v2, v3, v4, v5, v6, v7, v8 ]
+
+                        bVerts= sorted(bVerts, key=lambda vert: vert.x)
+                        old_objs.append( Rectangle(Vector(red, green, blue), bVerts[0], bVerts[1], bVerts[2], bVerts[3]))
+                        old_objs.append( Rectangle(Vector(red, green, blue), bVerts[4], bVerts[5], bVerts[6], bVerts[7]))
+
+                        bVerts= sorted(bVerts, key=lambda vert: vert.y)
+                        old_objs.append( Rectangle(Vector(red, green, blue), bVerts[0], bVerts[1], bVerts[2], bVerts[3]))
+                        old_objs.append( Rectangle(Vector(red, green, blue), bVerts[4], bVerts[5], bVerts[6], bVerts[7]))
+
+                        bVerts= sorted(bVerts, key=lambda vert: vert.z)
+                        old_objs.append( Rectangle(Vector(red, green, blue), bVerts[0], bVerts[1], bVerts[2], bVerts[3]))
+                        old_objs.append( Rectangle(Vector(red, green, blue), bVerts[4], bVerts[5], bVerts[6], bVerts[7]))
+                    elif parse[0] == "triangle":
+                        v0 = (float(parse[1]), float(parse[2]), float(parse[3]))
+                        v1 = (float(parse[4]), float(parse[5]), float(parse[6]))
+                        v2 = (float(parse[7]), float(parse[8]), float(parse[9]))
+                        tri_color = Vector(255*float(parse[10]), 255*float(parse[11]), 255*float(parse[12]))
+                        old_objs.append(Triangle(v0, v1, v2, tri_color))
+                    line = fread.readline()
+                fread.seek(0)
+                if old_bulbs != bulbs:
+                    bulbs = copy.deepcopy(old_bulbs)
+                if old_suns != suns:
+                    suns = copy.deepcopy(old_suns)
+                if old_objs != objs:
+                    objs = copy.deepcopy(old_objs)
+                if old_verts != verts:
+                    verts = copy.deepcopy(old_verts)
+            except Exception:
+                print "There was an error in the object file."
             time.sleep(1)
 
 
@@ -451,6 +454,7 @@ for x in range(40):
         px.y_bound = px.y + height/20
         #print x, y, "\t|\t", px.x, px.y, "\t\t|\t", px.x_bound, px.y_bound
         px.start()
+    print float(x*20 + y + 1)/((40.0*20.0)/100.0), "% done"
 print "Done starting threads."
 
 while True:
