@@ -233,15 +233,15 @@ class Rectangle(object):
 		line2 = None
 
 		rVerts = sorted(rVerts, key=lambda vert: vert.x)
-		self.minX = rVerts[0].x
-		self.maxX = rVerts[3].x
+		self.minX = round(rVerts[0].x, 5)
+		self.maxX = round(rVerts[3].x, 5)
 
 		if (self.minX != self.maxX):
 			line1 = Vector(rVerts[1].x - rVerts[0].x, rVerts[1].y - rVerts[0].y, rVerts[1].z - rVerts[0].z)
 
 		rVerts = sorted(rVerts, key=lambda vert: vert.y)
-		self.minY = rVerts[0].y
-		self.maxY = rVerts[3].y
+		self.minY = round(rVerts[0].y, 5)
+		self.maxY = round(rVerts[3].y, 5)
 
 		if (self.minY != self.maxY):
 			if (line1):
@@ -250,8 +250,8 @@ class Rectangle(object):
 				line1 = Vector(rVerts[1].x - rVerts[0].x, rVerts[1].y - rVerts[0].y, rVerts[1].z - rVerts[0].z)
 
 		rVerts = sorted(rVerts, key=lambda vert: vert.z)
-		self.minZ = rVerts[0].z
-		self.maxZ = rVerts[3].z
+		self.minZ = round(rVerts[0].z, 5)
+		self.maxZ = round(rVerts[3].z, 5)
 
 		if (self.minZ != self.maxZ):
 			if (line1 == None):
@@ -271,10 +271,21 @@ class Rectangle(object):
 		else:
 			d = (self.p - l.o).dot(self.n) / d
 			point = l.o+l.d*d
+			global enableOutput
 
-			if (point.x >= self.minX and point.x <= self.maxX and point.y >= self.minY and point.y <= self.maxY and point.z >= self.minZ and point.z <= self.maxZ) :
+			if (round(point.x, 5) >= self.minX and round(point.x, 5) <= self.maxX and round(point.y, 5) >= self.minY and round(point.y, 5) <= self.maxY and round(point.z, 5) >= self.minZ and round(point.z, 5) <= self.maxZ) :
+				if (enableOutput):
+					print("INTERSECTION AT: "  + str(point.x) + ", " + str(point.y) + ", " + str(point.z))
 				return Intersection(l.o+l.d*d, d, self.n, self)
 			else :
+				if (enableOutput):
+					if (point.x < self.minX or point.x > self.maxX):
+						print("MISS DUE TO X: "  + str(point.x) + ", " + str(point.y) + ", " + str(point.z) + "   minX: " + str(self.minX) + "   maxX: " + str(self.maxX))
+					elif (point.y < self.minY or point.y > self.maxY):
+						print("MISS DUE TO Y: "  + str(point.x) + ", " + str(point.y) + ", " + str(point.z) + "   minY: " + str(self.minY) + "   maxY: " + str(self.maxY))
+					elif (point.z < self.minZ or point.z > self.maxZ):
+						print("MISS DUE TO Z: "  + str(point.x) + ", " + str(point.y) + ", " + str(point.z) + "   minZ: " + str(self.minZ) + "   maxZ: " + str(self.maxZ))
+
 				return Intersection( Vector(0,0,0), -1, Vector(0,0,0), self)
 
 class Sphere(object):
@@ -341,7 +352,7 @@ class Triangle(object):
 		v0v1 = self.v1 - self.v0
 		v0v2 = self.v2 - self.v0
 		cross = v0v1.cross(v0v2)
-		return Vector(cross[0], cross[1], cross[2])
+		return Vector(cross[0], cross[1], cross[2]).normal()
 
 	def intersection(self, l):
 		""" http://www.scratchapixel.com/lessons/3d-basic-lessons/lesson-9-ray-triangle-intersection/
@@ -492,6 +503,8 @@ def trace(ray, objects, hash):
 	return col
 
 def recalculateColor(intersect):
+	global enableOutput
+
 	col = Vector( 0, 0, 0 )
 	for b in bulbs:
 		lightDir = Vector( b[0] - intersect.p.x, b[1] - intersect.p.y, b[2] - intersect.p.z).normal()
@@ -526,6 +539,7 @@ global numThreadsCompleted
 global oldHash
 global lastCacheReset
 global cacheMissesDueToHash
+global enableOutput
 
 running = True
 
@@ -550,6 +564,7 @@ totalThreadTime = 0;
 numThreadsCompleted = 0;
 oldHash = "";
 lastCacheReset = 0;
+enableOutput = False
 cameraPos = Vector(0,0,0)
 
 print "Now reading ", sys.argv[1], "..."
@@ -649,13 +664,31 @@ while True:
 
 				cameraPos = Vector(cameraPos.x + dX, cameraPos.y + dY, cameraPos.z + dZ)
 			elif event.key == pygame.K_UP:
-				forward = Vector(forward.x, sensitivity+forward.y, forward.z).normal();
+				dY = sensitivity;
+				dZ = sensitivity;
+
+				if (forward.z >= 0):
+					dY = -dY;
+				
+				if (forward.y <= 0):
+					dZ = - dZ;
+				
+				forward = Vector(forward.x, dY + forward.y, dZ + forward.z);
 				cross = forward.cross(up)
 				right = Vector(cross[0], cross[1], cross[2]).normal();
 				cross = right.cross(forward);
 				up = Vector(cross[0], cross[1], cross[2]).normal();
 			elif event.key == pygame.K_DOWN:
-				forward = Vector(forward.x, -sensitivity+forward.y, forward.z).normal();
+				dY = sensitivity;
+				dZ = sensitivity;
+
+				if (forward.z <= 0):
+					dY = -dY;
+				
+				if (forward.y >= 0):
+					dZ = - dZ;
+				
+				forward = Vector(forward.x, dY + forward.y, dZ + forward.z);
 				cross = forward.cross(up)
 				right = Vector(cross[0], cross[1], cross[2]).normal();
 				cross = right.cross(forward);
@@ -700,6 +733,9 @@ while True:
 				forward = Vector( 0.0, 0.0, -1.0 )
 				up = Vector( 0.0, 1.0, 0.0 )
 				right = Vector( 1.0, 0.0, 0.0 )
+			elif event.key == pygame.K_p:
+				enableOutput = not enableOutput
+				print("ENABLE OUTPUT = " + str(enableOutput))
 			elif event.key == pygame.K_ESCAPE:
 				running = False
 				while threading.activeCount() > 1:
