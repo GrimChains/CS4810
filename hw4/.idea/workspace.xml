@@ -26,7 +26,7 @@
       <file leaf-file-name="hw4.py" pinned="false" current="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/hw4.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="522" column="31" selection-start="20131" selection-end="20131" vertical-scroll-proportion="0.0" vertical-offset="8629" max-vertical-offset="12733">
+            <state line="100" column="97" selection-start="3825" selection-end="3825" vertical-scroll-proportion="0.0" vertical-offset="1513" max-vertical-offset="12699">
               <folding>
                 <element signature="e#0#11#0" expanded="true" />
               </folding>
@@ -37,7 +37,7 @@
       <file leaf-file-name="hw3bulb.txt" pinned="false" current="true" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/test_cases/hw3bulb.txt">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="4" column="21" selection-start="130" selection-end="130" vertical-scroll-proportion="0.1440678" vertical-offset="0" max-vertical-offset="472">
+            <state line="3" column="32" selection-start="108" selection-end="108" vertical-scroll-proportion="0.108050846" vertical-offset="0" max-vertical-offset="472">
               <folding />
             </state>
           </provider>
@@ -190,7 +190,7 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/hw4.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="522" column="31" selection-start="20131" selection-end="20131" vertical-scroll-proportion="0.0" vertical-offset="8629" max-vertical-offset="12733">
+        <state line="100" column="97" selection-start="3825" selection-end="3825" vertical-scroll-proportion="0.0" vertical-offset="1513" max-vertical-offset="12699">
           <folding>
             <element signature="e#0#11#0" expanded="true" />
           </folding>
@@ -199,7 +199,7 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/test_cases/hw3bulb.txt">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="4" column="21" selection-start="130" selection-end="130" vertical-scroll-proportion="0.1440678" vertical-offset="0" max-vertical-offset="472">
+        <state line="3" column="32" selection-start="108" selection-end="108" vertical-scroll-proportion="0.108050846" vertical-offset="0" max-vertical-offset="472">
           <folding />
         </state>
       </provider>

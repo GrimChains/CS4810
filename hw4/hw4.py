@@ -93,20 +93,18 @@ class ObjFile(threading.Thread):
                             y = float(parse[2])
                             z = float(parse[3])
                             d = float(parse[4])
-                            f = float(parse[5])
                             if x != 0:
-                                old_objs.append( Plane( Vector( (-d/x), 0, 0), Vector( x, y, z), f, Vector(255*float(parse[6]), 255*float(parse[7]), 255*float(parse[8]))) )
+                                old_objs.append( Plane( Vector( (-d/x), 0, 0), Vector( x, y, z), Vector(255*float(parse[5]), 255*float(parse[6]), 255*float(parse[7])), float(parse[8])) )
                             elif y != 0 :
-                                old_objs.append( Plane( Vector( 0, (-d/y), 0), Vector( x, y, z), f, Vector(255*float(parse[6]), 255*float(parse[7]), 255*float(parse[8]))) )
+                                old_objs.append( Plane( Vector( 0, (-d/y), 0), Vector( x, y, z), Vector(255*float(parse[5]), 255*float(parse[6]), 255*float(parse[7])), float(parse[8])) )
                             elif z != 0 :
-                                old_objs.append( Plane( Vector( 0, 0, (-d/z) ), Vector( x, y, z), f, Vector(255*float(parse[6]), 255*float(parse[7]), 255*float(parse[8]))) )
+                                old_objs.append( Plane( Vector( 0, 0, (-d/z) ), Vector( x, y, z), Vector(255*float(parse[5]), 255*float(parse[6]), 255*float(parse[7])), float(parse[8])) )
                         elif parse[0] == "sphere" :
                             x = float(parse[1])
                             y = float(parse[2])
                             z = float(parse[3])
                             r = float(parse[4])
-                            f = float(parse[5])
-                            old_objs.append( Sphere( Vector( x, y, z), r, f, Vector(float(parse[6])*255.0, float(parse[7])*255.0, float(parse[8])*255.0)))
+                            old_objs.append( Sphere( Vector( x, y, z), r, Vector(float(parse[5])*255.0, float(parse[6])*255.0, float(parse[7])*255.0), float(parse[8])))
                         elif parse[0] == "vertex":
                             x = float(parse[1])
                             y = float(parse[2])
@@ -280,11 +278,11 @@ class Rectangle(object):
 
 class Sphere(object):
 
-    def __init__(self, center, radius, reflection, color ):
+    def __init__(self, center, radius, color, reflection ):
         self.c = center
         self.r = radius
-        self.f = reflection
         self.col = color
+        self.f = reflection
 
     def intersection(self, l):
         p0c = l.o - self.c
@@ -319,11 +317,11 @@ class Sphere(object):
 
 class Plane(object):
 
-    def __init__(self, point, normal, reflection, color):
+    def __init__(self, point, normal, color, reflection):
         self.n = normal
         self.p = point
-        self.f = reflection
         self.col = color
+        self.f = reflection
 
     def intersection(self, l):
         d = l.d.dot(self.n)
