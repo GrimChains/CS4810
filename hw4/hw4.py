@@ -25,7 +25,12 @@ class Pixel(threading.Thread):
 					t = float(height - 2 * j) / max(width, height)
 					s = float(2 * i - width) / max(width, height)
 					ray = Ray(cameraPos, forward + (right * s) + (up * t))
-					col = trace(ray, objs, hash)
+					col, collision_object = trace(ray, objs, hash)
+					try:
+						pixel_objects[i][j] = collision_object
+					except KeyError:
+						pixel_objects[i] = {}
+						pixel_objects[i][j] = collision_object
 					screen.fill((max(min(int(col.x),255),0), max(min(int(col.y),255),0), max(min(int(col.z),255),0)), pygame.Rect(i,j,1,1))
 
 			endTime = time.clock();
@@ -223,6 +228,9 @@ class Vector(object):
 		assert type(b) == float or type(b) == int
 		return Vector(self.x*b, self.y*b, self.z*b)
 
+	def __str__(self):
+		return "<%s, %s, %s>" % (self.x, self.y, self.z)
+
 class Rectangle(object):
 	def __init__(self, color, v1, v2, v3, v4):
 		self.col = color
@@ -310,9 +318,11 @@ class Sphere(object):
 				t = t2;
 		return Intersection( (l.o + l.d * t), math.sqrt( (l.d.x * t)**2 + (l.d.y * t)**2 + (l.d.z * t)**2), self.normal(l.o + l.d*t), self )
 
-
 	def normal(self, b):
 		return (b - self.c).normal()
+
+	def move(self, v):
+		self.c += v
 
 
 class Plane(object):
@@ -385,6 +395,11 @@ class Triangle(object):
 		# Intersection(point, distance, normal, obj)
 		return Intersection(p, p.magnitude(), self.normal(), self)
 
+	def move(self, v):
+		self.v0 += v
+		self.v1 += v
+		self.v2 += v
+
 
 class Tetrahedron(object):
 	def __init__(self, vertices, triangles):
@@ -442,7 +457,7 @@ def trace(ray, objects, hash):
 	intersect = testRay(ray, objects)
 
 	if intersect.d == -1 or intersect.p.z < -100:
-		return Vector(-1,-1,-1)
+		return Vector(-1,-1,-1), None
 	else:
 		eyeDir = Vector( cameraPos.x - intersect.p.x, cameraPos.y - intersect.p.y, cameraPos.z - intersect.p.z)
 
@@ -489,7 +504,7 @@ def trace(ray, objects, hash):
 
 	if time.time() - tempo > 0.013:
 		pass#print "a"
-	return col
+	return col, intersect.obj
 
 def recalculateColor(intersect):
 	col = Vector( 0, 0, 0 )
@@ -507,6 +522,14 @@ def recalculateColor(intersect):
 		if inter.d == -1:
 			col = Vector( col.x + intersect.obj.col.x * s[3] * max(intersect.n.dot(lightDir), 0), col.y + intersect.obj.col.y * s[4] * max(intersect.n.dot(lightDir), 0), col.z + intersect.obj.col.z * s[5] * max(intersect.n.dot(lightDir), 0))
 	return col
+
+
+def dist_bn_points(v1, v2):
+	xd = v2.x - v1.x
+	yd = v2.y - v1.y
+	zd = v2.z - v1.z
+
+	return math.sqrt(xd**2 + yd**2 + zd**2)
 
 global objs
 global suns
@@ -526,6 +549,8 @@ global numThreadsCompleted
 global oldHash
 global lastCacheReset
 global cacheMissesDueToHash
+global pixel_objects
+global selected_obj
 
 running = True
 
@@ -550,6 +575,8 @@ totalThreadTime = 0;
 numThreadsCompleted = 0;
 oldHash = "";
 lastCacheReset = 0;
+pixel_objects = {}
+selected_obj = None
 cameraPos = Vector(0,0,0)
 
 print "Now reading ", sys.argv[1], "..."
@@ -609,6 +636,30 @@ while True:
 				pass
 			pygame.quit()
 			sys.exit()
+		elif event.type == pygame.MOUSEBUTTONDOWN:
+			mouse_x, mouse_y = pygame.mouse.get_pos()
+			try:
+				# Get the object at the current pixel
+				selected_obj = pixel_objects[mouse_x][mouse_y]
+			except KeyError:
+				# No object at this pixel
+				selected_obj = None
+		elif event.type == pygame.MOUSEBUTTONUP:
+			selected_obj = None
+			cache.clear()
+		elif event.type == pygame.MOUSEMOTION:
+			LeftButton = 0
+			if event.buttons[LeftButton]:
+				rel = event.rel
+				dist_from_camera = dist_bn_points(selected_obj.c, cameraPos)
+				if abs(rel[0]) > abs(rel[1]):
+					diff = right*(rel[0]*(dist_from_camera*.02))
+				else:
+					diff = up*(-rel[1]/100.0)
+				try:
+					selected_obj.move(diff)
+				except AttributeError:
+					pass
 		elif event.type == pygame.KEYDOWN:
 			#print("CACHE HITS: " + str(cacheHits)  + "    CACHE MISSES: " + str(cacheMisses) + "   CACHE MISSED DUE TO HASH: " + str(cacheMissesDueToHash))
 			#print("CACHE SIZE: " + str(len(cache)))
@@ -666,10 +717,22 @@ while True:
 
 				if (forward.z >= 0):
 					dX = -dX;
-				
+
 				if (forward.x <= 0):
 					dZ = - dZ;
-				
+
+				forward = Vector(dX + forward.x, forward.y, dZ + forward.z);
+				cross = forward.cross(up)
+				right = Vector(cross[0], cross[1], cross[2]).normal();
+				cross = right.cross(forward);
+				up = Vector(cross[0], cross[1], cross[2]).normal();
+			elif event.key == pygame.K_LEFT:
+				dX = sensitivity;
+				dZ = sensitivity;
+
+				if (forward.x <= 0):
+					dZ = - dZ;
+
 				forward = Vector(dX + forward.x, forward.y, dZ + forward.z);
 				cross = forward.cross(up)
 				right = Vector(cross[0], cross[1], cross[2]).normal();
@@ -681,10 +744,10 @@ while True:
 
 				if (forward.z <= 0):
 					dX = -dX;
-				
+
 				if (forward.x >= 0):
 					dZ = - dZ;
-				
+
 				forward = Vector(dX + forward.x, forward.y, dZ + forward.z);
 				cross = forward.cross(up)
 				right = Vector(cross[0], cross[1], cross[2]).normal();
