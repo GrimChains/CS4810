@@ -19,12 +19,13 @@ class Pixel(threading.Thread):
 		t = float(height - 2 * y) / max(width, height)
 		while running:
 			startTime = time.clock();
+			hash = oldHash;
 			for i in range(x, min(x_bound, width)):
 				for j in range(y, min(y_bound, height)):
 					t = float(height - 2 * j) / max(width, height)
 					s = float(2 * i - width) / max(width, height)
 					ray = Ray(cameraPos, forward + (right * s) + (up * t))
-					col = trace(ray, objs)
+					col = trace(ray, objs, hash)
 					screen.fill((max(min(int(col.x),255),0), max(min(int(col.y),255),0), max(min(int(col.z),255),0)), pygame.Rect(i,j,1,1))
 
 			endTime = time.clock();
@@ -285,9 +286,12 @@ class Sphere(object):
 		if t1 is None and t2 is None:
 			return Intersection( Vector(0,0,0), -1, Vector(0,0,0), self)
 		elif t1 is not None and t2 is not None:
-			t = min(t1, t2)
-		else:
-			t = max(t1, t2)
+			if (t1 <= 0):
+				return Intersection( Vector(0,0,0), -1, Vector(0,0,0), self)
+			elif (t2 <= 0):
+				t = t1;
+			else:
+				t = t2;
 		return Intersection( (l.o + l.d * t), math.sqrt( (l.d.x * t)**2 + (l.d.y * t)**2 + (l.d.z * t)**2), self.normal(l.o + l.d*t), self )
 
 
@@ -314,7 +318,6 @@ class Plane(object):
 		else:
 			d = (self.p - l.o).dot(self.n) / d
 			return Intersection(l.o+l.d*d, d, self.n, self)
-
 
 class Triangle(object):
 	def __init__(self, v0, v1, v2, color):
@@ -401,7 +404,7 @@ def testRay(ray, objects, ignore=None):
 	return intersect
 
 
-def trace(ray, objects):
+def trace(ray, objects, hash):
 	global suns
 	global bulbs
 	global cameraPos
@@ -410,6 +413,9 @@ def trace(ray, objects):
 	global cache
 	global oldHash
 	global lastCacheReset
+	global cacheMissesDueToHash
+	global totalThreadTime
+	global numThreadsCompleted
 
 	tempo = time.time()
 	intersect = testRay(ray, objects)
@@ -418,26 +424,44 @@ def trace(ray, objects):
 		return Vector(-1,-1,-1)
 	else:
 		eyeDir = Vector( cameraPos.x - intersect.p.x, cameraPos.y - intersect.p.y, cameraPos.z - intersect.p.z)
+
+		if (numThreadsCompleted > 0):
+			averageThreadTime = totalThreadTime / numThreadsCompleted;
+		else:
+			averageThreadTime = 1;
+
+		rounding = 0
+
+		if (averageThreadTime > 8):
+			rounding = 0
+		elif (averageThreadTime > 5):
+			rounding = 1
+		elif (averageThreadTime > 3):
+			rounding = 2
+		elif (averageThreadTime > 1):
+			rounding = 3
+		else :
+			rounding = 5
+
 		if intersect.n.dot(eyeDir) < 0 :
 			intersect.n = intersect.n * -1
 
-		#cacheString = str(round(intersect.p.x, 2)) + ", " + str(round(intersect.p.y, 2)) + ", " + str(round(intersect.p.z)) + ", " + str(intersect.n.x) + ", " + str(intersect.n.y) + ", " + str(intersect.n.z)
-		cacheString = str((intersect.p.x, 2)) + ", " + str((intersect.p.y, 2)) + ", " + str((intersect.p.z)) + ", " + str(intersect.n.x) + ", " + str(intersect.n.y) + ", " + str(intersect.n.z)
+		cacheString = str(round(intersect.p.x, rounding)) + ", " + str(round(intersect.p.y, rounding)) + ", " + str(round(intersect.p.z, rounding)) + ", " + str(round(intersect.n.x, rounding)) + ", " + str(round(intersect.n.y, rounding)) + ", " + str(round(intersect.n.z, rounding))
 		col = Vector( 0, 0, 0 )
 
 		try:
 			cacheObj = cache[cacheString];
 
-			if (cacheObj.hash == oldHash):
+			if (cacheObj.hash == oldHash and oldHash == hash):
 				col = cacheObj.color;
 				cacheHits += 1;
 			else:
 				col = recalculateColor(intersect);
-				cacheMisses += 1;
+				cacheMissesDueToHash += 1;
 		except: # not in cache
 			col = recalculateColor(intersect)
 
-			if (time.time() - lastCacheReset > 4):
+			if (time.time() - lastCacheReset > 2):
 				cache[cacheString] = CacheObject(oldHash, col);
 
 			cacheMisses += 1;
@@ -451,7 +475,7 @@ def recalculateColor(intersect):
 	for b in bulbs:
 		lightDir = Vector( b[0] - intersect.p.x, b[1] - intersect.p.y, b[2] - intersect.p.z).normal()
 		ray = Ray( intersect.p, lightDir )
-		inter = testRay( ray, objects, intersect.obj)
+		inter = testRay( ray, objs, intersect.obj)
 		dist = math.sqrt( (intersect.p.x - b[0])**2 + (intersect.p.y - b[1])**2 + (intersect.p.z - b[2])**2 )
 		if inter.d == -1 or inter.d > dist:
 			col = Vector( col.x + intersect.obj.col.x * b[3] * max(intersect.n.dot(lightDir), 0), col.y + intersect.obj.col.y * b[4] * max(intersect.n.dot(lightDir), 0), col.z + intersect.obj.col.z * b[5] * max(intersect.n.dot(lightDir), 0))
@@ -480,6 +504,7 @@ global totalThreadTime
 global numThreadsCompleted
 global oldHash
 global lastCacheReset
+global cacheMissesDueToHash
 
 running = True
 
@@ -498,6 +523,7 @@ verts = []
 cache = dict();
 cacheMisses = 0;
 cacheHits = 0;
+cacheMissesDueToHash = 0
 totalThreadTime = 0;
 numThreadsCompleted = 0;
 oldHash = "";
@@ -524,16 +550,18 @@ print "Now starting threads... (This may take awhile)"
 # Thread factory
 running = True
 running = True
-for x in range(40):
-	for y in range(20):
+numThreads = 81;
+numThreadsXorY = int(math.floor(math.sqrt(numThreads)))
+for x in range(numThreadsXorY):
+	for y in range(numThreadsXorY):
 		px = Pixel()
-		px.x = int(float(x)*float(width)/40.0)
-		px.x_bound = px.x + width/40
-		px.y = int(float(y)*float(height)/20.0)
-		px.y_bound = px.y + height/20
+		px.x = int(float(x)*float(width)/numThreadsXorY)
+		px.x_bound = px.x + width/numThreadsXorY
+		px.y = int(float(y)*float(height)/numThreadsXorY)
+		px.y_bound = px.y + height/numThreadsXorY
 		#print x, y, "\t|\t", px.x, px.y, "\t\t|\t", px.x_bound, px.y_bound
 		px.start()
-	print float(x*20 + y + 1)/((40.0*20.0)/100.0), "% done"
+	print float(x*numThreadsXorY + y + 1)/((numThreads)/100.0), "% done"
 print "Done starting threads."
 
 while True:
@@ -546,13 +574,22 @@ while True:
 			pygame.quit()
 			sys.exit()
 		elif event.type == pygame.KEYDOWN:
+			#print("CACHE HITS: " + str(cacheHits)  + "    CACHE MISSES: " + str(cacheMisses) + "   CACHE MISSED DUE TO HASH: " + str(cacheMissesDueToHash))
+			#print("CACHE SIZE: " + str(len(cache)))
+			#print("AVG THREAD TIME: " + str(totalThreadTime / numThreadsCompleted))
+
+			print("CAMERA POS: " + str(cameraPos.x) + ", " + str(cameraPos.y) + ", " + str(cameraPos.z))
+			print("FORWARD: " + str(forward.x) + ", " + str(forward.y) + ", " + str(forward.z) + "\n")
 			if event.key == pygame.K_w:
-				cameraPos = Vector(cameraPos.x, cameraPos.y, -sensitivity+cameraPos.z)
-				print("CACHE HITS: " + str(cacheHits)  + "    CACHE MISSES: " + str(cacheMisses))
-				print("CACHE SIZE: " + str(len(cache)))
-				print("AVG THREAD TIME: " + str(totalThreadTime / numThreadsCompleted))
+				dX = forward.x * sensitivity;
+				dY = forward.y * sensitivity;
+				dZ = forward.z * sensitivity;
+				cameraPos = Vector(cameraPos.x + dX, cameraPos.y + dY, cameraPos.z + dZ)
 			elif event.key == pygame.K_s:
-				cameraPos = Vector(cameraPos.x, cameraPos.y, sensitivity+cameraPos.z)
+				dX = forward.x * -sensitivity;
+				dY = forward.y * -sensitivity;
+				dZ = forward.z * -sensitivity;
+				cameraPos = Vector(cameraPos.x + dX, cameraPos.y + dY, cameraPos.z + dZ)
 			elif event.key == pygame.K_a:
 				cameraPos = Vector(-sensitivity+cameraPos.x, cameraPos.y, cameraPos.z)
 			elif event.key == pygame.K_d:
@@ -561,6 +598,58 @@ while True:
 				cameraPos = Vector(cameraPos.x, -sensitivity+cameraPos.y, cameraPos.z)
 			elif event.key == pygame.K_SPACE:
 				cameraPos = Vector(cameraPos.x, sensitivity+cameraPos.y, cameraPos.z)
+			elif event.key == pygame.K_UP:
+				forward = Vector(forward.x, sensitivity+forward.y, forward.z).normal();
+				cross = forward.cross(up)
+				right = Vector(cross[0], cross[1], cross[2]).normal();
+				cross = right.cross(forward);
+				up = Vector(cross[0], cross[1], cross[2]).normal();
+			elif event.key == pygame.K_DOWN:
+				forward = Vector(forward.x, -sensitivity+forward.y, forward.z).normal();
+				cross = forward.cross(up)
+				right = Vector(cross[0], cross[1], cross[2]).normal();
+				cross = right.cross(forward);
+				up = Vector(cross[0], cross[1], cross[2]).normal();
+			elif event.key == pygame.K_RIGHT:
+				dX = sensitivity;
+				dZ = sensitivity;
+
+				if (forward.z >= 0):
+					dX = -dX;
+				
+				if (forward.x <= 0):
+					dZ = - dZ;
+				
+				forward = Vector(dX + forward.x, forward.y, dZ + forward.z);
+				cross = forward.cross(up)
+				right = Vector(cross[0], cross[1], cross[2]).normal();
+				cross = right.cross(forward);
+				up = Vector(cross[0], cross[1], cross[2]).normal();
+			elif event.key == pygame.K_LEFT:
+				dX = sensitivity;
+				dZ = sensitivity;
+
+				if (forward.z <= 0):
+					dX = -dX;
+				
+				if (forward.x >= 0):
+					dZ = - dZ;
+				
+				forward = Vector(dX + forward.x, forward.y, dZ + forward.z);
+				cross = forward.cross(up)
+				right = Vector(cross[0], cross[1], cross[2]).normal();
+				cross = right.cross(forward);
+				up = Vector(cross[0], cross[1], cross[2]).normal();
+			elif event.key == pygame.K_r:
+				forward = Vector( 0.0, 0.0, -1.0 )
+				up = Vector( 0.0, 1.0, 0.0 )
+				right = Vector( 1.0, 0.0, 0.0 )
+
+				cameraPos = Vector(0, 0 , 0)
+			elif event.key == pygame.K_e:
+				forward = Vector( 0.0, 0.0, -1.0 )
+				up = Vector( 0.0, 1.0, 0.0 )
+				right = Vector( 1.0, 0.0, 0.0 )
 			elif event.key == pygame.K_ESCAPE:
 				running = False
 				while threading.activeCount() > 1:
