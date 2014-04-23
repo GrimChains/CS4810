@@ -730,9 +730,8 @@ while True:
             LeftButton = 0
             if event.buttons[LeftButton]:
                 rel = event.rel
-                dist_from_camera = dist_bn_points(selected_obj.c, cameraPos)
                 if abs(rel[0]) > abs(rel[1]):
-                    diff = right*(rel[0]*(dist_from_camera*.02))
+                    diff = right*(rel[0]/100.0)
                 else:
                     diff = up*(-rel[1]/100.0)
                 try:
