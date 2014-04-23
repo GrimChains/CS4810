@@ -139,16 +139,16 @@ class ObjFile(threading.Thread):
 							bVerts = [ v1, v2, v3, v4, v5, v6, v7, v8 ]
 
 							bVerts= sorted(bVerts, key=lambda vert: vert.x)
-							old_objs.append( Rectangle(Vector(red, green, blue), bVerts[0], bVerts[1], bVerts[2], bVerts[3]))
-							old_objs.append( Rectangle(Vector(red, green, blue), bVerts[4], bVerts[5], bVerts[6], bVerts[7]))
+							old_objs.append( Rectangle(Vector(255, 0, 0), bVerts[0], bVerts[1], bVerts[2], bVerts[3]))
+							old_objs.append( Rectangle(Vector(255, 0, 0), bVerts[4], bVerts[5], bVerts[6], bVerts[7]))
 
 							bVerts= sorted(bVerts, key=lambda vert: vert.y)
-							old_objs.append( Rectangle(Vector(red, green, blue), bVerts[0], bVerts[1], bVerts[2], bVerts[3]))
-							old_objs.append( Rectangle(Vector(red, green, blue), bVerts[4], bVerts[5], bVerts[6], bVerts[7]))
+							old_objs.append( Rectangle(Vector(0, 255, 0), bVerts[0], bVerts[1], bVerts[2], bVerts[3]))
+							old_objs.append( Rectangle(Vector(0, 255, 0), bVerts[4], bVerts[5], bVerts[6], bVerts[7]))
 
 							bVerts= sorted(bVerts, key=lambda vert: vert.z)
-							old_objs.append( Rectangle(Vector(red, green, blue), bVerts[0], bVerts[1], bVerts[2], bVerts[3]))
-							old_objs.append( Rectangle(Vector(red, green, blue), bVerts[4], bVerts[5], bVerts[6], bVerts[7]))
+							old_objs.append( Rectangle(Vector(0, 0, 255), bVerts[0], bVerts[1], bVerts[2], bVerts[3]))
+							old_objs.append( Rectangle(Vector(0, 0, 255), bVerts[4], bVerts[5], bVerts[6], bVerts[7]))
 						elif parse[0] == "triangle":
 							v0 = old_verts[int(parse[1])]
 							v1 = old_verts[int(parse[2])]
@@ -314,11 +314,6 @@ class Sphere(object):
 	def normal(self, b):
 		return (b - self.c).normal()
 
-
-class Box(object):
-	def __init__(self, verts, color):
-		self.verts = verts;
-		self.color = color;
 
 class Plane(object):
 
