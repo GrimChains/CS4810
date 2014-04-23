@@ -125,11 +125,27 @@ class ObjFile(threading.Thread):
                         old_objs.append( Rectangle(Vector(red, green, blue), bVerts[0], bVerts[1], bVerts[2], bVerts[3]))
                         old_objs.append( Rectangle(Vector(red, green, blue), bVerts[4], bVerts[5], bVerts[6], bVerts[7]))
                     elif parse[0] == "triangle":
-                        v0 = (float(parse[1]), float(parse[2]), float(parse[3]))
-                        v1 = (float(parse[4]), float(parse[5]), float(parse[6]))
-                        v2 = (float(parse[7]), float(parse[8]), float(parse[9]))
-                        tri_color = Vector(255*float(parse[10]), 255*float(parse[11]), 255*float(parse[12]))
+                        v0 = old_verts[int(parse[1])]
+                        v1 = old_verts[int(parse[2])]
+                        v2 = old_verts[int(parse[3])]
+                        tri_color = Vector(255*float(parse[4]), 255*float(parse[5]), 255*float(parse[6]))
                         old_objs.append(Triangle(v0, v1, v2, tri_color))
+                    elif parse[0] == "tetrahedron":
+                        v0 = old_verts[int(parse[1])]
+                        v1 = old_verts[int(parse[2])]
+                        v2 = old_verts[int(parse[3])]
+                        v3 = old_verts[int(parse[4])]
+
+                        tetra_color = Vector(255*float(parse[5]), 255*float(parse[6]), 255*float(parse[7]))
+                        t1 = Triangle(v0, v1, v2, tetra_color)
+                        t2 = Triangle(v0, v1, v3, tetra_color)
+                        t3 = Triangle(v0, v2, v3, tetra_color)
+                        t4 = Triangle(v1, v2, v3, tetra_color)
+                        old_objs.append(t1)
+                        old_objs.append(t2)
+                        old_objs.append(t3)
+                        old_objs.append(t4)
+                        Tetrahedron((v0, v1, v2, v3), (t1, t2, t3, t4))
                     line = fread.readline()
                 fread.seek(0)
                 if old_bulbs != bulbs:
@@ -290,9 +306,9 @@ class Plane(object):
 
 class Triangle(object):
     def __init__(self, v0, v1, v2, color):
-        self.v0 = Vector(v0[0], v0[1], v0[2])
-        self.v1 = Vector(v1[0], v1[1], v1[2])
-        self.v2 = Vector(v2[0], v2[1], v2[2])
+        self.v0 = v0
+        self.v1 = v1
+        self.v2 = v2
         self.col = color
 
     def normal(self):
@@ -302,21 +318,25 @@ class Triangle(object):
         return Vector(cross[0], cross[1], cross[2])
 
     def intersection(self, l):
+        """ http://www.scratchapixel.com/lessons/3d-basic-lessons/lesson-9-ray-triangle-intersection/
+        ray-triangle-intersection-geometric-solution/ """
         origin = l.o
         v = l.d
         d = self.normal().dot(self.v0)
-        if self.normal().dot(v) == 0:
+        if -0.00001 < self.normal().dot(v) < 0.00001:
             return Intersection(Vector(0, 0, 0), -1, Vector(0, 0, 0), self)
             # return None
 
-        t = - (self.normal().dot(origin) + d) / self.normal().dot(v)
+        t = -(self.normal().dot(origin) + d) / self.normal().dot(v)
+        # if t < 0:
+        #     return Intersection(Vector(0, 0, 0), -1, Vector(0, 0, 0), self)
         p = origin + (v * t)
 
         edge0 = self.v1 - self.v0
         vp0 = p - self.v0
         c = edge0.cross(vp0)
         c = Vector(c[0], c[1], c[2])
-        if self.normal().dot(c) < 0:
+        if self.normal().dot(c) < 0.00001:
             return Intersection(Vector(0, 0, 0), -1, Vector(0, 0, 0), self)
             # return None
 
@@ -324,7 +344,7 @@ class Triangle(object):
         vp1 = p - self.v1
         c = edge1.cross(vp1)
         c = Vector(c[0], c[1], c[2])
-        if self.normal().dot(c) < 0:
+        if self.normal().dot(c) < 0.00001:
             return Intersection(Vector(0, 0, 0), -1, Vector(0, 0, 0), self)
             # return None
 
@@ -332,12 +352,18 @@ class Triangle(object):
         vp2 = p - self.v2
         c = edge2.cross(vp2)
         c = Vector(c[0], c[1], c[2])
-        if self.normal().dot(c) < 0:
+        if self.normal().dot(c) < 0.00001:
             return Intersection(Vector(0, 0, 0), -1, Vector(0, 0, 0), self)
             # return None
 
         # Intersection(point, distance, normal, obj)
-        return Intersection(Vector(p.x, p.y, p.z), p.magnitude(), self.normal(), self)
+        return Intersection(p, p.magnitude(), self.normal(), self)
+
+
+class Tetrahedron(object):
+    def __init__(self, vertices, triangles):
+        self.vertices = vertices
+        self.triangles = triangles
 
 
 class Ray(object):
