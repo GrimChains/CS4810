@@ -584,9 +584,9 @@ for x in range(numThreadsXorY):
 	for y in range(numThreadsXorY):
 		px = Pixel()
 		px.x = int(float(x)*float(width)/numThreadsXorY)
-		px.x_bound = px.x + width/numThreadsXorY
+		px.x_bound = px.x + width/numThreadsXorY + 1
 		px.y = int(float(y)*float(height)/numThreadsXorY)
-		px.y_bound = px.y + height/numThreadsXorY
+		px.y_bound = px.y + height/numThreadsXorY + 1
 		#print x, y, "\t|\t", px.x, px.y, "\t\t|\t", px.x_bound, px.y_bound
 		px.start()
 	print float(x*numThreadsXorY + y + 1)/((numThreads)/100.0), "% done"
