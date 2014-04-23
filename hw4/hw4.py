@@ -632,13 +632,27 @@ while True:
 				dZ = forward.z * -sensitivity;
 				cameraPos = Vector(cameraPos.x + dX, cameraPos.y + dY, cameraPos.z + dZ)
 			elif event.key == pygame.K_a:
-				cameraPos = Vector(-sensitivity+cameraPos.x, cameraPos.y, cameraPos.z)
+				dX = right.x * -sensitivity;
+				dY = right.y * -sensitivity;
+				dZ = right.z * -sensitivity;
+				cameraPos = Vector(cameraPos.x + dX, cameraPos.y + dY, cameraPos.z + dZ)
 			elif event.key == pygame.K_d:
-				cameraPos = Vector(sensitivity+cameraPos.x, cameraPos.y, cameraPos.z)
+				dX = right.x * sensitivity;
+				dY = right.y * sensitivity;
+				dZ = right.z * sensitivity;
+				cameraPos = Vector(cameraPos.x + dX, cameraPos.y + dY, cameraPos.z + dZ)
 			elif event.key == pygame.K_LCTRL:
-				cameraPos = Vector(cameraPos.x, -sensitivity+cameraPos.y, cameraPos.z)
+				dX = up.x * -sensitivity;
+				dY = up.y * -sensitivity;
+				dZ = up.z * -sensitivity;
+
+				cameraPos = Vector(cameraPos.x + dX, cameraPos.y + dY, cameraPos.z + dZ)
 			elif event.key == pygame.K_SPACE:
-				cameraPos = Vector(cameraPos.x, sensitivity+cameraPos.y, cameraPos.z)
+				dX = up.x * sensitivity;
+				dY = up.y * sensitivity;
+				dZ = up.z * sensitivity;
+
+				cameraPos = Vector(cameraPos.x + dX, cameraPos.y + dY, cameraPos.z + dZ)
 			elif event.key == pygame.K_UP:
 				forward = Vector(forward.x, sensitivity+forward.y, forward.z).normal();
 				cross = forward.cross(up)
