@@ -16,27 +16,32 @@ class Pixel(threading.Thread):
 		x = self.x
 		x_bound = self.x_bound
 		y_bound = self.y_bound
-		global width,height, screen, errorLock, running, cameraPos, forward, right, up, numThreadsCompleted, totalThreadTime
+		global width, height, screen, errorLock, running, cameraPos, forward, right, up, numThreadsCompleted, totalThreadTime
 		t = float(height - 2 * y) / max(width, height)
 		while running:
-			startTime = time.clock();
-			hash = oldHash;
-			for i in range(x, min(x_bound, width)):
-				for j in range(y, min(y_bound, height)):
+			startTime = time.clock()
+			hash = oldHash
+			step_w = max(width / 120, 1)
+			step_h = max(height / 120, 1)
+			for i in range(x, min(x_bound, width), step_w):
+				for j in range(y, min(y_bound, height), step_h):
 					t = float(height - 2 * j) / max(width, height)
 					s = float(2 * i - width) / max(width, height)
 					ray = Ray(cameraPos, forward + (right * s) + (up * t))
 					col, collision_object = trace(ray, objs, hash)
-					try:
-						pixel_objects[i][j] = collision_object
-					except KeyError:
-						pixel_objects[i] = {}
-						pixel_objects[i][j] = collision_object
-					screen.fill((max(min(int(col.x),255),0), max(min(int(col.y),255),0), max(min(int(col.z),255),0)), pygame.Rect(i,j,1,1))
+					for a in range(i, i+step_w):
+						for b in range(j, j+step_h):
+							try:
+								pixel_objects[a][b] = collision_object
+							except KeyError:
+								pixel_objects[a] = {}
+								pixel_objects[a][b] = collision_object
+					screen.fill((max(min(int(col.x), 255), 0), max(min(int(col.y), 255), 0),
+								 max(min(int(col.z), 255), 0)), pygame.Rect(i, j, step_w, step_h))
 
-			endTime = time.clock();
-			numThreadsCompleted += 1;
-			totalThreadTime += endTime - startTime;
+			endTime = time.clock()
+			numThreadsCompleted += 1
+			totalThreadTime += endTime - startTime
 
 
 class ObjFile(threading.Thread):
@@ -133,7 +138,12 @@ class ObjFile(threading.Thread):
 							else:
 								reflectivity = float(parse[8])
 
-							old_objs.append( Sphere( Vector( x, y, z), r, Vector(float(parse[5])*255.0, float(parse[6])*255.0, float(parse[7])*255.0), reflectivity))
+							if (len(parse) < 10):
+								refractivity = 1
+							else:
+								refractivity = float(parse[9])
+
+							old_objs.append( Sphere( Vector( x, y, z), r, Vector(float(parse[5])*255.0, float(parse[6])*255.0, float(parse[7])*255.0), reflectivity, refractivity))
 						elif parse[0] == "vertex":
 							x = float(parse[1])
 							y = float(parse[2])
@@ -237,10 +247,10 @@ class ObjFile(threading.Thread):
 							v3 = old_verts[int(parse[4])]
 
 							tetra_color = Vector(255*float(parse[5]), 255*float(parse[6]), 255*float(parse[7]))
-							t1 = Triangle(v0, v1, v2, tetra_color)
-							t2 = Triangle(v0, v1, v3, tetra_color)
-							t3 = Triangle(v0, v2, v3, tetra_color)
-							t4 = Triangle(v1, v2, v3, tetra_color)
+							t1 = Triangle(v0, v1, v2, tetra_color, "")
+							t2 = Triangle(v0, v1, v3, tetra_color, "")
+							t3 = Triangle(v0, v2, v3, tetra_color, "")
+							t4 = Triangle(v1, v2, v3, tetra_color, "")
 							old_objs.append(t1)
 							old_objs.append(t2)
 							old_objs.append(t3)
@@ -264,7 +274,6 @@ class ObjFile(threading.Thread):
 				print e.message
 				print "There was an error in the object file."
 			time.sleep(1)
-
 
 class Vector(object):
 
@@ -298,6 +307,48 @@ class Vector(object):
 	def __mul__(self, b):
 		assert type(b) == float or type(b) == int
 		return Vector(self.x*b, self.y*b, self.z*b)
+
+	def __str__(self):
+		return "<%s, %s, %s>" % (self.x, self.y, self.z)
+
+
+class Box(object):
+	def __init__(self, vertices, reflectivity):
+		self.vertices = vertices
+		self.reflectivity = reflectivity
+
+		self.rectangles = []
+		self.set_rectangles()
+
+	def set_rectangles(self):
+		self.vertices = sorted(self.vertices, key=lambda vert: vert.x)
+		r1 = Rectangle(Vector(255, 0, 0), self.vertices[0], self.vertices[1], self.vertices[2], self.vertices[3],
+					   self.reflectivity, self)
+		r2 = Rectangle(Vector(255, 0, 0), self.vertices[4], self.vertices[5], self.vertices[6], self.vertices[7],
+					   self.reflectivity, self)
+
+		self.vertices = sorted(self.vertices, key=lambda vert: vert.y)
+		r3 = Rectangle(Vector(0, 255, 0), self.vertices[0], self.vertices[1], self.vertices[2], self.vertices[3],
+					   self.reflectivity, self)
+		r4 = Rectangle(Vector(0, 255, 0), self.vertices[4], self.vertices[5], self.vertices[6], self.vertices[7],
+					   self.reflectivity, self)
+
+		self.vertices = sorted(self.vertices, key=lambda vert: vert.z)
+		r5 = Rectangle(Vector(0, 0, 255), self.vertices[0], self.vertices[1], self.vertices[2], self.vertices[3],
+					   self.reflectivity, self)
+		r6 = Rectangle(Vector(0, 0, 255), self.vertices[4], self.vertices[5], self.vertices[6], self.vertices[7],
+					   self.reflectivity, self)
+
+		self.rectangles = [r1, r2, r3, r4, r5, r6]
+
+	def intersection(self, l):
+		inter = testRay(l, self.rectangles)
+		return inter
+
+	def move(self, v):
+		for i in range(0, len(self.vertices)):
+			self.vertices[i] += v
+		self.set_rectangles()
 
 	def __div__(self, b):
 		assert (type(b) == float or type(b) == int) and b != 0
@@ -419,11 +470,12 @@ class Rectangle(object):
 
 class Sphere(object):
 
-	def __init__(self, center, radius, color, reflection ):
+	def __init__(self, center, radius, color, reflection, refraction ):
 		self.c = center
 		self.r = radius
 		self.col = color
 		self.f = reflection
+		self.a = refraction
 
 	def intersection(self, l):
 		p0c = l.o - self.c
@@ -450,7 +502,6 @@ class Sphere(object):
 			else:
 				t = t2;
 		return Intersection( (l.o + l.d * t), math.sqrt( (l.d.x * t)**2 + (l.d.y * t)**2 + (l.d.z * t)**2), self.normal(l.o + l.d*t), self )
-
 
 	def normal(self, b):
 		return (b - self.c).normal()
@@ -551,6 +602,7 @@ class Triangle(object):
 		self.col = color
 		self.f = reflection
 		self.texture = texture
+		print(texture)
 
 		global textures
 		if (len(texture) > 0):
@@ -652,11 +704,6 @@ class Triangle(object):
 		col = pix[u, v]
 		return Vector(col[0], col[1], col[2])
 
-class Tetrahedron(object):
-	def __init__(self, vertices, triangles):
-		self.vertices = vertices
-		self.triangles = triangles
-
 
 class Ray(object):
 
@@ -673,16 +720,17 @@ class Intersection(object):
 		self.n = normal
 		self.obj = obj
 
-class CacheObject(object):
-	def __init__(self, hash, color):
-		self.hash = hash
-		self.color = color
-
 class ImageObject(object):
 	def __init__(self, pixels, width, height):
 		self.pixels= pixels
 		self.width = width
 		self.height = height
+
+class CacheObject(object):
+	def __init__(self, hash, color):
+		self.hash = hash
+		self.color = color
+
 
 def testRay(ray, objects, ignore=None):
 	intersect = Intersection( Vector(0,0,0), -1, Vector(0,0,0), None)
@@ -696,6 +744,16 @@ def testRay(ray, objects, ignore=None):
 				intersect = currentIntersect
 	return intersect
 
+def refractRay(ray, objects, object):
+	intersect = Intersection( Vector(0,0,0), -1, Vector(0,0,0), None)
+	for obj in objects:
+		if obj is object:
+			currentIntersect = obj.intersection(ray)
+			if currentIntersect.d > 0 and intersect.d < 0:
+				intersect = currentIntersect
+			elif 0 < currentIntersect.d < intersect.d:
+				intersect = currentIntersect
+	return intersect
 
 def trace(ray, objects, hash):
 	global suns
@@ -725,9 +783,9 @@ def trace(ray, objects, hash):
 
 		rounding = 0
 
-		if (averageThreadTime > 8):
+		if (averageThreadTime > 15):
 			rounding = 0
-		elif (averageThreadTime > 5):
+		elif (averageThreadTime > 10):
 			rounding = 1
 		elif (averageThreadTime > 3):
 			rounding = 2
@@ -735,8 +793,6 @@ def trace(ray, objects, hash):
 			rounding = 3
 		else :
 			rounding = 5
-
-		rounding = 2
 
 		if intersect.n.dot(eyeDir) < 0 :
 			intersect.n = intersect.n * -1
@@ -774,45 +830,88 @@ def recalculateColor(intersect):
 		ray = Ray( intersect.p, lightDir )
 		inter = testRay( ray, objs, intersect.obj)
 		dist = math.sqrt( (intersect.p.x - b[0])**2 + (intersect.p.y - b[1])**2 + (intersect.p.z - b[2])**2 )
-		if inter.d == -1 or inter.d > dist:
+		if inter.d == -1 or inter.d > dist or (type(inter.obj) is Sphere and inter.obj.a != 1):
 			nrcol = Vector( nrcol.x + intersect.obj.getColorAt(intersect.p).x * b[3] * max(intersect.n.dot(lightDir), 0), nrcol.y + intersect.obj.getColorAt(intersect.p).y * b[4] * max(intersect.n.dot(lightDir), 0), nrcol.z + intersect.obj.getColorAt(intersect.p).z * b[5] * max(intersect.n.dot(lightDir), 0))
 	for s in suns:
 		lightDir = Vector( s[0], s[1], s[2] )
 		ray = Ray( intersect.p, lightDir )
 		inter = testRay( ray, objs, intersect.obj)
-		if inter.d == -1:
+		if inter.d == -1 or (type(inter.obj) is Sphere and inter.obj.a != 1):
 			nrcol = Vector( nrcol.x + intersect.obj.getColorAt(intersect.p).x * s[3] * max(intersect.n.dot(lightDir), 0), nrcol.y + intersect.obj.getColorAt(intersect.p).y * s[4] * max(intersect.n.dot(lightDir), 0), nrcol.z + intersect.obj.getColorAt(intersect.p).z * s[5] * max(intersect.n.dot(lightDir), 0))
 
-	#Get color of reflection
+	#Get color of reflection or refraction
+	#http://www.cs.sjsu.edu/~teoh/teaching/previous/cs116b_sp08/lectures/lecture15_raytracing.ppt
+	#https://www.cs.unc.edu/~rademach/xroads-RT/RTarticle.html
+	#http://ray-tracer-concept.blogspot.com/2011/12/refraction.html
 	eyeDir = Vector( cameraPos.x - intersect.p.x, cameraPos.y - intersect.p.y, cameraPos.z - intersect.p.z)
-	if intersect.n.dot(eyeDir) < 0 :
-		intersect.n = intersect.n * -1
-	rx = -eyeDir.x + 2*(intersect.n.x)*(eyeDir.dot(intersect.n))
-	ry = -eyeDir.y + 2*(intersect.n.y)*(eyeDir.dot(intersect.n))
-	rz = -eyeDir.z + 2*(intersect.n.z)*(eyeDir.dot(intersect.n))
-	#refl = -eyeDir + 2*(intersect.p-intersect.obj.c)*eyeDir.dot(intersect.obj.normal(intersect.p))
-	reflRay = Ray( Vector(intersect.p.x, intersect.p.y, intersect.p.z ), Vector( rx, ry, rz ))
-	reflInter = testRay( reflRay, objs, intersect.obj)
-	if reflInter.d != -1:  #reflection ray does collide with object - get color of that object at that spot
-		for b in bulbs:
-			lightDir = Vector( b[0] - reflInter.p.x, b[1] - reflInter.p.y, b[2] - reflInter.p.z).normal()
-			ray = Ray( reflInter.p, lightDir )
-			inter = testRay( ray, objs, reflInter.obj)
-			dist = math.sqrt( (reflInter.p.x - b[0])**2 + (reflInter.p.y - b[1])**2 + (reflInter.p.z - b[2])**2 )
-			if inter.d == -1 or inter.d > dist:
-				rcol = Vector( rcol.x + reflInter.obj.getColorAt(intersect.p).x * b[3] * max(reflInter.n.dot(lightDir), 0), rcol.y + reflInter.obj.getColorAt(intersect.p).y * b[4] * max(reflInter.n.dot(lightDir), 0), rcol.z + reflInter.obj.getColorAt(intersect.p).z * b[5] * max(reflInter.n.dot(lightDir), 0))
-		for s in suns:
-			lightDir = Vector( s[0], s[1], s[2] )
-			ray = Ray( reflInter.p, lightDir )
-			inter = testRay( ray, objs, reflInter.obj)
-			if inter.d == -1:
-				rcol = Vector( rcol.x + reflInter.obj.getColorAt(intersect.p).x * s[3] * max(reflInter.n.dot(lightDir), 0), rcol.y + reflInter.obj.getColorAt(intersect.p).y * s[4] * max(reflInter.n.dot(lightDir), 0), rcol.z + reflInter.obj.getColorAt(intersect.p).z * s[5] * max(reflInter.n.dot(lightDir), 0))
-	cx = intersect.obj.f*rcol.x + (1-intersect.obj.f)*nrcol.x
-	cy = intersect.obj.f*rcol.y + (1-intersect.obj.f)*nrcol.y
-	cz = intersect.obj.f*rcol.z + (1-intersect.obj.f)*nrcol.z
-	col = Vector( cx, cy, cz )
-	return col
+	if intersect.obj.f != 0:
+		if intersect.n.dot(eyeDir) < 0 :
+			intersect.n = intersect.n * -1
+		rx = -eyeDir.x + 2*(intersect.n.x)*(eyeDir.dot(intersect.n))
+		ry = -eyeDir.y + 2*(intersect.n.y)*(eyeDir.dot(intersect.n))
+		rz = -eyeDir.z + 2*(intersect.n.z)*(eyeDir.dot(intersect.n))
+		reflRay = Ray( Vector(intersect.p.x, intersect.p.y, intersect.p.z ), Vector( rx, ry, rz ))
+		reflInter = testRay( reflRay, objs, intersect.obj)
+		if reflInter.d != -1:  #reflection ray does collide with object - get color of that object at that spot
+			for b in bulbs:
+				lightDir = Vector( b[0] - reflInter.p.x, b[1] - reflInter.p.y, b[2] - reflInter.p.z).normal()
+				ray = Ray( reflInter.p, lightDir )
+				inter = testRay( ray, objs, reflInter.obj)
+				dist = math.sqrt( (reflInter.p.x - b[0])**2 + (reflInter.p.y - b[1])**2 + (reflInter.p.z - b[2])**2 )
+				if inter.d == -1 or inter.d > dist:
+					rcol = Vector( rcol.x + reflInter.obj.getColorAt(intersect.p).x * b[3] * max(reflInter.n.dot(lightDir), 0), rcol.y + reflInter.obj.getColorAt(intersect.p).y * b[4] * max(reflInter.n.dot(lightDir), 0), rcol.z + reflInter.obj.getColorAt(intersect.p).z * b[5] * max(reflInter.n.dot(lightDir), 0))
+			for s in suns:
+				lightDir = Vector( s[0], s[1], s[2] )
+				ray = Ray( reflInter.p, lightDir )
+				inter = testRay( ray, objs, reflInter.obj)
+				if inter.d == -1:
+					rcol = Vector( rcol.x + reflInter.obj.getColorAt(intersect.p).x * s[3] * max(reflInter.n.dot(lightDir), 0), rcol.y + reflInter.obj.getColorAt(intersect.p).y * s[4] * max(reflInter.n.dot(lightDir), 0), rcol.z + reflInter.obj.getColorAt(intersect.p).z * s[5] * max(reflInter.n.dot(lightDir), 0))
+		cx = intersect.obj.f*rcol.x + (1-intersect.obj.f)*nrcol.x
+		cy = intersect.obj.f*rcol.y + (1-intersect.obj.f)*nrcol.y
+		cz = intersect.obj.f*rcol.z + (1-intersect.obj.f)*nrcol.z
+		col = Vector( cx, cy, cz )
+		return col
+	#If object not reflective, check for transparency
+	elif type(intersect.obj) is Sphere and intersect.obj.a != 1:
+		#Find first refracted ray
+		n = 1.0 / intersect.obj.a
+		c1 = -intersect.n.dot(eyeDir)
+		c2 = math.sqrt(1 - n*n * (1 - c1*c1))
+		rx = (n * c1 - c2) * intersect.n.x + (n * eyeDir.x)
+		ry = (n * c1 - c2) * intersect.n.y + (n * eyeDir.y)
+		rz = (n * c1 - c2) * intersect.n.z + (n * eyeDir.z)
+		refractRay1 = Ray( Vector(intersect.p.x, intersect.p.y, intersect.p.z ), Vector( rx, ry, rz ))
 
+		#Find second refracted ray (leaving object)
+		intersect2 = refractRay(refractRay1, objs, intersect.obj)
+		n = intersect.obj.a
+		c1 = intersect.n.dot(Vector(refractRay1.d.x, refractRay1.d.y, refractRay1.d.z))
+		#print(c1)
+		c2 = math.sqrt(1 - n*n * (1 - c1*c1))
+		rx = (n * c1 - c2) * -intersect2.n.x + (n * refractRay1.d.x)
+		ry = (n * c1 - c2) * -intersect2.n.y + (n * refractRay1.d.y)
+		rz = (n * c1 - c2) * -intersect2.n.z + (n * refractRay1.d.z)
+		refractRay2 = Ray( Vector(intersect2.p.x, intersect2.p.y, intersect2.p.z ), Vector( rx, ry, rz ))
+
+		#See if final refraction ray collides with object
+		refractInter = testRay( refractRay2, objs, intersect.obj)
+		if refractInter.d != -1:  #refraction ray does collide with object - get color of that object at that spot
+			for b in bulbs:
+				lightDir = Vector( b[0] - refractInter.p.x, b[1] - refractInter.p.y, b[2] - refractInter.p.z).normal()
+				ray = Ray( refractInter.p, lightDir )
+				inter = testRay( ray, objs, refractInter.obj)
+				dist = math.sqrt( (refractInter.p.x - b[0])**2 + (refractInter.p.y - b[1])**2 + (refractInter.p.z - b[2])**2 )
+				if inter.d == -1 or inter.d > dist:
+					rcol = Vector( rcol.x + refractInter.obj.col.x * b[3] * max(refractInter.n.dot(lightDir), 0), rcol.y + refractInter.obj.col.y * b[4] * max(refractInter.n.dot(lightDir), 0), rcol.z + refractInter.obj.col.z * b[5] * max(refractInter.n.dot(lightDir), 0))
+			for s in suns:
+				lightDir = Vector( s[0], s[1], s[2] )
+				ray = Ray( refractInter.p, lightDir )
+				inter = testRay( ray, objs, refractInter.obj)
+				if inter.d == -1:
+					rcol = Vector( rcol.x + refractInter.obj.col.x * s[3] * max(refractInter.n.dot(lightDir), 0), rcol.y + refractInter.obj.col.y * s[4] * max(refractInter.n.dot(lightDir), 0), rcol.z + refractInter.obj.col.z * s[5] * max(refractInter.n.dot(lightDir), 0))
+		return rcol
+	else:  #Not reflective or transparent
+		return nrcol
 
 def dist_bn_points(v1, v2):
 	xd = v2.x - v1.x
@@ -945,11 +1044,10 @@ while True:
 			LeftButton = 0
 			if event.buttons[LeftButton]:
 				rel = event.rel
-				dist_from_camera = dist_bn_points(selected_obj.c, cameraPos)
 				if abs(rel[0]) > abs(rel[1]):
-					diff = right*(rel[0]*(dist_from_camera*.02))
+					diff = right*(rel[0]/(width*.5))
 				else:
-					diff = up*(-rel[1]/100.0)
+					diff = up*(-rel[1]/(height*.5))
 				try:
 					selected_obj.move(diff)
 				except AttributeError:
@@ -999,10 +1097,10 @@ while True:
 
 				if (forward.z >= 0):
 					dY = -dY;
-				
+
 				if (forward.y <= 0):
 					dZ = - dZ;
-				
+
 				forward = Vector(forward.x, dY + forward.y, dZ + forward.z);
 				cross = forward.cross(up)
 				right = Vector(cross[0], cross[1], cross[2]).normal();
@@ -1014,10 +1112,10 @@ while True:
 
 				if (forward.z <= 0):
 					dY = -dY;
-				
+
 				if (forward.y >= 0):
 					dZ = - dZ;
-				
+
 				forward = Vector(forward.x, dY + forward.y, dZ + forward.z);
 				cross = forward.cross(up)
 				right = Vector(cross[0], cross[1], cross[2]).normal();
@@ -1029,10 +1127,10 @@ while True:
 
 				if (forward.z >= 0):
 					dX = -dX;
-				
+
 				if (forward.x <= 0):
 					dZ = - dZ;
-				
+
 				forward = Vector(dX + forward.x, forward.y, dZ + forward.z);
 				cross = forward.cross(up)
 				right = Vector(cross[0], cross[1], cross[2]).normal();
@@ -1044,10 +1142,10 @@ while True:
 
 				if (forward.z <= 0):
 					dX = -dX;
-				
+
 				if (forward.x >= 0):
 					dZ = - dZ;
-				
+
 				forward = Vector(dX + forward.x, forward.y, dZ + forward.z);
 				cross = forward.cross(up)
 				right = Vector(cross[0], cross[1], cross[2]).normal();
