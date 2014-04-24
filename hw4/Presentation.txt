@@ -1,0 +1,23 @@
+Proposed Presentation Order:
+
+hw4triangle.txt
+- Triangles
+- Camera movement
+- click n drag
+
+Stop program
+Change size of hw4triangle.txt to 512 x 512
+Run again - shows dynamic resolution based on screen size
+
+Mention that accuracy/resolution is a function of thread execution time
+
+hw4box.txt
+- Boxes
+- click n drag
+
+hw3bulb.txt
+- reflections
+
+Texture mapping (if working)
+
+Constructive solid geometry (if working)
