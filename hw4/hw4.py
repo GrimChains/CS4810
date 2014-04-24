@@ -595,13 +595,13 @@ def recalculateColor(intersect):
         ray = Ray( intersect.p, lightDir )
         inter = testRay( ray, objs, intersect.obj)
         dist = math.sqrt( (intersect.p.x - b[0])**2 + (intersect.p.y - b[1])**2 + (intersect.p.z - b[2])**2 )
-        if inter.d == -1 or inter.d > dist:
+        if inter.d == -1 or inter.d > dist or (type(inter.obj) is not Plane and inter.obj.a != 1):
             nrcol = Vector( nrcol.x + intersect.obj.col.x * b[3] * max(intersect.n.dot(lightDir), 0), nrcol.y + intersect.obj.col.y * b[4] * max(intersect.n.dot(lightDir), 0), nrcol.z + intersect.obj.col.z * b[5] * max(intersect.n.dot(lightDir), 0))
     for s in suns:
         lightDir = Vector( s[0], s[1], s[2] )
         ray = Ray( intersect.p, lightDir )
         inter = testRay( ray, objs, intersect.obj)
-        if inter.d == -1:
+        if inter.d == -1 or (type(inter.obj) is not Plane and inter.obj.a != 1):
             nrcol = Vector( nrcol.x + intersect.obj.col.x * s[3] * max(intersect.n.dot(lightDir), 0), nrcol.y + intersect.obj.col.y * s[4] * max(intersect.n.dot(lightDir), 0), nrcol.z + intersect.obj.col.z * s[5] * max(intersect.n.dot(lightDir), 0))
 
     #Get color of reflection or refraction
@@ -640,22 +640,22 @@ def recalculateColor(intersect):
     elif type(intersect.obj) is not Plane and intersect.obj.a != 1:
         #Find first refracted ray
         n = 1.0 / intersect.obj.a
-        c1 = intersect.n.dot(eyeDir)
+        c1 = -intersect.n.dot(eyeDir)
         c2 = math.sqrt(1 - n*n * (1 - c1*c1))
-        rx = (n * c1 - c2) * intersect.n.x - (n * eyeDir.x)
-        ry = (n * c1 - c2) * intersect.n.y - (n * eyeDir.y)
-        rz = (n * c1 - c2) * intersect.n.z - (n * eyeDir.z)
+        rx = (n * c1 - c2) * intersect.n.x + (n * eyeDir.x)
+        ry = (n * c1 - c2) * intersect.n.y + (n * eyeDir.y)
+        rz = (n * c1 - c2) * intersect.n.z + (n * eyeDir.z)
         refractRay1 = Ray( Vector(intersect.p.x, intersect.p.y, intersect.p.z ), Vector( rx, ry, rz ))
 
         #Find second refracted ray (leaving object)
         intersect2 = refractRay(refractRay1, objs, intersect.obj)
         n = intersect.obj.a
-        c1 = -intersect.n.dot(Vector( -refractRay1.d.x, -refractRay1.d.y, -refractRay1.d.z))
+        c1 = intersect.n.dot(Vector(refractRay1.d.x, refractRay1.d.y, refractRay1.d.z))
         #print(c1)
         c2 = math.sqrt(1 - n*n * (1 - c1*c1))
-        rx = (n * c1 - c2) * -intersect2.n.x - (n * -refractRay1.d.x)
-        ry = (n * c1 - c2) * -intersect2.n.y - (n * -refractRay1.d.y)
-        rz = (n * c1 - c2) * -intersect2.n.z - (n * -refractRay1.d.z)
+        rx = (n * c1 - c2) * -intersect2.n.x + (n * refractRay1.d.x)
+        ry = (n * c1 - c2) * -intersect2.n.y + (n * refractRay1.d.y)
+        rz = (n * c1 - c2) * -intersect2.n.z + (n * refractRay1.d.z)
         refractRay2 = Ray( Vector(intersect2.p.x, intersect2.p.y, intersect2.p.z ), Vector( rx, ry, rz ))
 
         #See if final refraction ray collides with object
