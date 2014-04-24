@@ -15,27 +15,32 @@ class Pixel(threading.Thread):
         x = self.x
         x_bound = self.x_bound
         y_bound = self.y_bound
-        global width,height, screen, errorLock, running, cameraPos, forward, right, up, numThreadsCompleted, totalThreadTime
+        global width, height, screen, errorLock, running, cameraPos, forward, right, up, numThreadsCompleted, totalThreadTime
         t = float(height - 2 * y) / max(width, height)
         while running:
-            startTime = time.clock();
-            hash = oldHash;
-            for i in range(x, min(x_bound, width)):
-                for j in range(y, min(y_bound, height)):
+            startTime = time.clock()
+            hash = oldHash
+            step_w = max(width / 120, 1)
+            step_h = max(height / 120, 1)
+            for i in range(x, min(x_bound, width), step_w):
+                for j in range(y, min(y_bound, height), step_h):
                     t = float(height - 2 * j) / max(width, height)
                     s = float(2 * i - width) / max(width, height)
                     ray = Ray(cameraPos, forward + (right * s) + (up * t))
                     col, collision_object = trace(ray, objs, hash)
-                    try:
-                        pixel_objects[i][j] = collision_object
-                    except KeyError:
-                        pixel_objects[i] = {}
-                        pixel_objects[i][j] = collision_object
-                    screen.fill((max(min(int(col.x),255),0), max(min(int(col.y),255),0), max(min(int(col.z),255),0)), pygame.Rect(i,j,1,1))
+                    for a in range(i, i+step_w):
+                        for b in range(j, j+step_h):
+                            try:
+                                pixel_objects[a][b] = collision_object
+                            except KeyError:
+                                pixel_objects[a] = {}
+                                pixel_objects[a][b] = collision_object
+                    screen.fill((max(min(int(col.x), 255), 0), max(min(int(col.y), 255), 0),
+                                 max(min(int(col.z), 255), 0)), pygame.Rect(i, j, step_w, step_h))
 
-            endTime = time.clock();
-            numThreadsCompleted += 1;
-            totalThreadTime += endTime - startTime;
+            endTime = time.clock()
+            numThreadsCompleted += 1
+            totalThreadTime += endTime - startTime
 
 
 class ObjFile(threading.Thread):
@@ -157,24 +162,14 @@ class ObjFile(threading.Thread):
                             v7 = old_verts[int(parse[10])]
                             v8 = old_verts[int(parse[11])]
 
-                            if (len(parse) < 13):
+                            if len(parse) < 13:
                                 reflectivity = 0
                             else:
-                                reflectivity = parse[12]
+                                reflectivity = float(parse[12])
 
                             bVerts = [ v1, v2, v3, v4, v5, v6, v7, v8 ]
 
-                            bVerts= sorted(bVerts, key=lambda vert: vert.x)
-                            old_objs.append( Rectangle(Vector(255, 0, 0), bVerts[0], bVerts[1], bVerts[2], bVerts[3], reflectivity))
-                            old_objs.append( Rectangle(Vector(255, 0, 0), bVerts[4], bVerts[5], bVerts[6], bVerts[7], reflectivity))
-
-                            bVerts= sorted(bVerts, key=lambda vert: vert.y)
-                            old_objs.append( Rectangle(Vector(0, 255, 0), bVerts[0], bVerts[1], bVerts[2], bVerts[3], reflectivity))
-                            old_objs.append( Rectangle(Vector(0, 255, 0), bVerts[4], bVerts[5], bVerts[6], bVerts[7], reflectivity))
-
-                            bVerts= sorted(bVerts, key=lambda vert: vert.z)
-                            old_objs.append( Rectangle(Vector(0, 0, 255), bVerts[0], bVerts[1], bVerts[2], bVerts[3], reflectivity))
-                            old_objs.append( Rectangle(Vector(0, 0, 255), bVerts[4], bVerts[5], bVerts[6], bVerts[7], reflectivity))
+                            old_objs.append(Box(bVerts, reflectivity))
                         elif parse[0] == "triangle":
                             v0 = old_verts[int(parse[1])]
                             v1 = old_verts[int(parse[2])]
@@ -259,16 +254,58 @@ class Vector(object):
     def __str__(self):
         return "<%s, %s, %s>" % (self.x, self.y, self.z)
 
-class Rectangle(object):
-    def __init__(self, color, v1, v2, v3, v4, reflectivity):
-        self.col = color
 
-        rVerts = [ v1, v2, v3, v4 ]
+class Box(object):
+    def __init__(self, vertices, reflectivity):
+        self.vertices = vertices
+        self.reflectivity = reflectivity
+
+        self.rectangles = []
+        self.set_rectangles()
+
+    def set_rectangles(self):
+        self.vertices = sorted(self.vertices, key=lambda vert: vert.x)
+        r1 = Rectangle(Vector(255, 0, 0), self.vertices[0], self.vertices[1], self.vertices[2], self.vertices[3],
+                       self.reflectivity, self)
+        r2 = Rectangle(Vector(255, 0, 0), self.vertices[4], self.vertices[5], self.vertices[6], self.vertices[7],
+                       self.reflectivity, self)
+
+        self.vertices = sorted(self.vertices, key=lambda vert: vert.y)
+        r3 = Rectangle(Vector(0, 255, 0), self.vertices[0], self.vertices[1], self.vertices[2], self.vertices[3],
+                       self.reflectivity, self)
+        r4 = Rectangle(Vector(0, 255, 0), self.vertices[4], self.vertices[5], self.vertices[6], self.vertices[7],
+                       self.reflectivity, self)
+
+        self.vertices = sorted(self.vertices, key=lambda vert: vert.z)
+        r5 = Rectangle(Vector(0, 0, 255), self.vertices[0], self.vertices[1], self.vertices[2], self.vertices[3],
+                       self.reflectivity, self)
+        r6 = Rectangle(Vector(0, 0, 255), self.vertices[4], self.vertices[5], self.vertices[6], self.vertices[7],
+                       self.reflectivity, self)
+
+        self.rectangles = [r1, r2, r3, r4, r5, r6]
+
+    def intersection(self, l):
+        inter = testRay(l, self.rectangles)
+        return inter
+
+    def move(self, v):
+        print "moving box"
+        for i in range(0, len(self.vertices)):
+            self.vertices[i] += v
+        self.set_rectangles()
+
+
+class Rectangle(object):
+    def __init__(self, color, v1, v2, v3, v4, reflectivity, box=None):
+        self.col = color
+        self.box = box
+
+        self.rVerts = [ v1, v2, v3, v4 ]
 
         line1 = None
         line2 = None
 
-        rVerts = sorted(rVerts, key=lambda vert: vert.x)
+        rVerts = sorted(self.rVerts, key=lambda vert: vert.x)
         self.minX = round(rVerts[0].x, 5)
         self.maxX = round(rVerts[3].x, 5)
 
@@ -299,6 +336,13 @@ class Rectangle(object):
         self.n = Vector(normalTmp[0], normalTmp[1], normalTmp[2]).normal()
         self.p = rVerts[0]
         self.f = reflectivity
+
+    def move(self, v):
+        # If rectangle belongs to box, call move on parent box
+        if self.box is not None:
+            self.box.move(v)
+        else:
+            self.rVerts = map(lambda vert: vert + v, self.rVerts)
 
     def intersection(self, l):
         d = l.d.dot(self.n)
@@ -466,10 +510,12 @@ class Intersection(object):
         self.n = normal
         self.obj = obj
 
+
 class CacheObject(object):
     def __init__(self, hash, color):
         self.hash = hash
         self.color = color
+
 
 def testRay(ray, objects, ignore=None):
     intersect = Intersection( Vector(0,0,0), -1, Vector(0,0,0), None)
@@ -731,9 +777,9 @@ while True:
             if event.buttons[LeftButton]:
                 rel = event.rel
                 if abs(rel[0]) > abs(rel[1]):
-                    diff = right*(rel[0]/100.0)
+                    diff = right*(rel[0]/(width*.5))
                 else:
-                    diff = up*(-rel[1]/100.0)
+                    diff = up*(-rel[1]/(height*.5))
                 try:
                     selected_obj.move(diff)
                 except AttributeError:
