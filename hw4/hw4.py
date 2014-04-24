@@ -182,23 +182,6 @@ class ObjFile(threading.Thread):
 
                             tri_color = Vector(255*float(parse[4]), 255*float(parse[5]), 255*float(parse[6]))
                             old_objs.append(Triangle(v0, v1, v2, tri_color, reflectivity))
-                        elif parse[0] == "tetrahedron":
-                            v0 = old_verts[int(parse[1])]
-                            v1 = old_verts[int(parse[2])]
-                            v2 = old_verts[int(parse[3])]
-                            v3 = old_verts[int(parse[4])]
-
-                            tetra_color = Vector(255*float(parse[5]), 255*float(parse[6]), 255*float(parse[7]))
-                            t1 = Triangle(v0, v1, v2, tetra_color)
-                            t2 = Triangle(v0, v1, v3, tetra_color)
-                            t3 = Triangle(v0, v2, v3, tetra_color)
-                            t4 = Triangle(v1, v2, v3, tetra_color)
-                            old_objs.append(t1)
-                            old_objs.append(t2)
-                            old_objs.append(t3)
-                            old_objs.append(t4)
-                            Tetrahedron((v0, v1, v2, v3), (t1, t2, t3, t4))
-
                     print("FILE IS DIFFERENT! CLEARING CACHE");
                     cache.clear();
                     oldHash = hash;
@@ -289,7 +272,6 @@ class Box(object):
         return inter
 
     def move(self, v):
-        print "moving box"
         for i in range(0, len(self.vertices)):
             self.vertices[i] += v
         self.set_rectangles()
@@ -487,12 +469,6 @@ class Triangle(object):
         self.v0 += v
         self.v1 += v
         self.v2 += v
-
-
-class Tetrahedron(object):
-    def __init__(self, vertices, triangles):
-        self.vertices = vertices
-        self.triangles = triangles
 
 
 class Ray(object):
