@@ -312,7 +312,6 @@ class BooleanSolid(object):
                 norm = objs[shapes[1]].normal(l.o + l.d * d)
             else:
                 norm = objs[shapes[0]].normal(l.o + l.d * d)
-            #norm = objs[shapes[1]].normal(l.o + l.d * d)
             return Intersection(l.o + l.d*d, d, norm, self)
         else:
             return Intersection(Vector(0,0,0), -1, Vector(0,0,0), self)
@@ -464,9 +463,6 @@ class Rectangle(object):
             uWidth = imageObj.width
             uHeight = height / width * imageObj.height
 
-            #self.map1 = Vector(v1.x / width * uWidth, v1.y / height * uHeight, 0)
-            #self.map2 = Vector(v2.x / width * uWidth, v2.y / height * uHeight, 0)
-            #self.map3 = Vector(v3.x / width * uWidth, v3.y / height * uHeight, 0)
             self.map1 = v1
             self.map2 = v2
             self.map3 = v3
@@ -719,8 +715,6 @@ class Triangle(object):
         # return None
 
         t = -(self.normal().dot(origin) + d) / self.normal().dot(v)
-        # if t < 0:
-        #     return Intersection(Vector(0, 0, 0), -1, Vector(0, 0, 0), self)
         p = origin + (v * t)
 
         edge0 = self.v1 - self.v0
@@ -729,7 +723,6 @@ class Triangle(object):
         c = Vector(c[0], c[1], c[2])
         if self.normal().dot(c) < 0.00001:
             return Intersection(Vector(0, 0, 0), -1, Vector(0, 0, 0), self)
-        # return None
 
         edge1 = self.v2 - self.v1
         vp1 = p - self.v1
@@ -737,7 +730,6 @@ class Triangle(object):
         c = Vector(c[0], c[1], c[2])
         if self.normal().dot(c) < 0.00001:
             return Intersection(Vector(0, 0, 0), -1, Vector(0, 0, 0), self)
-        # return None
 
         edge2 = self.v0 - self.v2
         vp2 = p - self.v2
@@ -745,9 +737,7 @@ class Triangle(object):
         c = Vector(c[0], c[1], c[2])
         if self.normal().dot(c) < 0.00001:
             return Intersection(Vector(0, 0, 0), -1, Vector(0, 0, 0), self)
-        # return None
 
-        # Intersection(point, distance, normal, obj)
         return Intersection(p, p.magnitude(), self.normal(), self)
 
     def move(self, v):
@@ -835,7 +825,6 @@ def trace(ray, objects, hash):
     global totalThreadTime
     global numThreadsCompleted
 
-    tempo = time.time()
     intersect = testRay(ray, objects)
 
     if intersect.d == -1 or intersect.p.z < -100:
@@ -884,8 +873,6 @@ def trace(ray, objects, hash):
 
             cacheMisses += 1;
 
-    if time.time() - tempo > 0.013:
-        pass#print "a"
     return col, intersect.obj
 
 def recalculateColor(intersect):
@@ -1115,97 +1102,97 @@ while True:
             print("CAMERA POS: " + str(cameraPos.x) + ", " + str(cameraPos.y) + ", " + str(cameraPos.z))
             print("FORWARD: " + str(forward.x) + ", " + str(forward.y) + ", " + str(forward.z) + "\n")
             if event.key == pygame.K_w:
-                dX = forward.x * sensitivity;
-                dY = forward.y * sensitivity;
-                dZ = forward.z * sensitivity;
+                dX = forward.x * sensitivity
+                dY = forward.y * sensitivity
+                dZ = forward.z * sensitivity
                 cameraPos = Vector(cameraPos.x + dX, cameraPos.y + dY, cameraPos.z + dZ)
             elif event.key == pygame.K_s:
-                dX = forward.x * -sensitivity;
-                dY = forward.y * -sensitivity;
-                dZ = forward.z * -sensitivity;
+                dX = forward.x * -sensitivity
+                dY = forward.y * -sensitivity
+                dZ = forward.z * -sensitivity
                 cameraPos = Vector(cameraPos.x + dX, cameraPos.y + dY, cameraPos.z + dZ)
             elif event.key == pygame.K_a:
-                dX = right.x * -sensitivity;
-                dY = right.y * -sensitivity;
-                dZ = right.z * -sensitivity;
+                dX = right.x * -sensitivity
+                dY = right.y * -sensitivity
+                dZ = right.z * -sensitivity
                 cameraPos = Vector(cameraPos.x + dX, cameraPos.y + dY, cameraPos.z + dZ)
             elif event.key == pygame.K_d:
-                dX = right.x * sensitivity;
-                dY = right.y * sensitivity;
-                dZ = right.z * sensitivity;
+                dX = right.x * sensitivity
+                dY = right.y * sensitivity
+                dZ = right.z * sensitivity
                 cameraPos = Vector(cameraPos.x + dX, cameraPos.y + dY, cameraPos.z + dZ)
             elif event.key == pygame.K_LCTRL:
-                dX = up.x * -sensitivity;
-                dY = up.y * -sensitivity;
-                dZ = up.z * -sensitivity;
+                dX = up.x * -sensitivity
+                dY = up.y * -sensitivity
+                dZ = up.z * -sensitivity
 
                 cameraPos = Vector(cameraPos.x + dX, cameraPos.y + dY, cameraPos.z + dZ)
             elif event.key == pygame.K_SPACE:
-                dX = up.x * sensitivity;
-                dY = up.y * sensitivity;
-                dZ = up.z * sensitivity;
+                dX = up.x * sensitivity
+                dY = up.y * sensitivity
+                dZ = up.z * sensitivity
 
                 cameraPos = Vector(cameraPos.x + dX, cameraPos.y + dY, cameraPos.z + dZ)
             elif event.key == pygame.K_UP:
-                dY = sensitivity;
-                dZ = sensitivity;
+                dY = sensitivity
+                dZ = sensitivity
 
                 if (forward.z >= 0):
-                    dY = -dY;
+                    dY = -dY
 
                 if (forward.y <= 0):
-                    dZ = - dZ;
+                    dZ = - dZ
 
-                forward = Vector(forward.x, dY + forward.y, dZ + forward.z);
+                forward = Vector(forward.x, dY + forward.y, dZ + forward.z)
                 cross = forward.cross(up)
-                right = Vector(cross[0], cross[1], cross[2]).normal();
-                cross = right.cross(forward);
-                up = Vector(cross[0], cross[1], cross[2]).normal();
+                right = Vector(cross[0], cross[1], cross[2]).normal()
+                cross = right.cross(forward)
+                up = Vector(cross[0], cross[1], cross[2]).normal()
             elif event.key == pygame.K_DOWN:
-                dY = sensitivity;
-                dZ = sensitivity;
+                dY = sensitivity
+                dZ = sensitivity
 
                 if (forward.z <= 0):
-                    dY = -dY;
+                    dY = -dY
 
                 if (forward.y >= 0):
-                    dZ = - dZ;
+                    dZ = - dZ
 
-                forward = Vector(forward.x, dY + forward.y, dZ + forward.z);
+                forward = Vector(forward.x, dY + forward.y, dZ + forward.z)
                 cross = forward.cross(up)
-                right = Vector(cross[0], cross[1], cross[2]).normal();
-                cross = right.cross(forward);
-                up = Vector(cross[0], cross[1], cross[2]).normal();
+                right = Vector(cross[0], cross[1], cross[2]).normal()
+                cross = right.cross(forward)
+                up = Vector(cross[0], cross[1], cross[2]).normal()
             elif event.key == pygame.K_RIGHT:
-                dX = sensitivity;
-                dZ = sensitivity;
+                dX = sensitivity
+                dZ = sensitivity
 
                 if (forward.z >= 0):
-                    dX = -dX;
+                    dX = -dX
 
                 if (forward.x <= 0):
-                    dZ = - dZ;
+                    dZ = - dZ
 
-                forward = Vector(dX + forward.x, forward.y, dZ + forward.z);
+                forward = Vector(dX + forward.x, forward.y, dZ + forward.z)
                 cross = forward.cross(up)
-                right = Vector(cross[0], cross[1], cross[2]).normal();
-                cross = right.cross(forward);
-                up = Vector(cross[0], cross[1], cross[2]).normal();
+                right = Vector(cross[0], cross[1], cross[2]).normal()
+                cross = right.cross(forward)
+                up = Vector(cross[0], cross[1], cross[2]).normal()
             elif event.key == pygame.K_LEFT:
-                dX = sensitivity;
-                dZ = sensitivity;
+                dX = sensitivity
+                dZ = sensitivity
 
                 if (forward.z <= 0):
-                    dX = -dX;
+                    dX = -dX
 
                 if (forward.x >= 0):
-                    dZ = - dZ;
+                    dZ = - dZ
 
-                forward = Vector(dX + forward.x, forward.y, dZ + forward.z);
+                forward = Vector(dX + forward.x, forward.y, dZ + forward.z)
                 cross = forward.cross(up)
-                right = Vector(cross[0], cross[1], cross[2]).normal();
-                cross = right.cross(forward);
-                up = Vector(cross[0], cross[1], cross[2]).normal();
+                right = Vector(cross[0], cross[1], cross[2]).normal()
+                cross = right.cross(forward)
+                up = Vector(cross[0], cross[1], cross[2]).normal()
             elif event.key == pygame.K_r:
                 forward = Vector( 0.0, 0.0, -1.0 )
                 up = Vector( 0.0, 1.0, 0.0 )
@@ -1225,4 +1212,3 @@ while True:
                     pass
                 pygame.quit()
                 sys.exit()
-            #clock.tick(5) # lock framerate to 10 fps.
