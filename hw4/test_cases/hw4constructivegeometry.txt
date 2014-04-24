@@ -1,0 +1,10 @@
+png 120 120 hw4constructivegeometry.png
+sphere 0.25 0 -1 0.25 1 0 0 0
+sphere 0.4 0 -1 0.3 0 1 0 0
+sphere -0.4 0 -1 0.3 0 0 1 0
+sphere -0.5 0.15 -1 0.3 0 1 1 0
+sun 0 1 0 1 1 1
+plane 0 1 0.1 0.5 0 0 1 0
+aplane 0 0 1 -1 1 1 1 1
+boolean 0 1 ^ 0 1 0 0
+boolean 2 3 + 1 0 0 0
