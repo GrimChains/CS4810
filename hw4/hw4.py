@@ -319,6 +319,11 @@ class BooleanSolid(object):
     def getColorAt(self, pixel):
         return self.col
 
+    def move(self, v):
+        shapes = self.shapes
+        objs[shapes[0]].move(v)
+        objs[shapes[1]].move(v)
+
 
 class Vector(object):
 
