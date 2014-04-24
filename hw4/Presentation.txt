@@ -4,6 +4,7 @@ hw4triangle.txt
 - Triangles
 - Camera movement
 - click n drag
+- Live edits to text file
 
 Stop program
 Change size of hw4triangle.txt to 512 x 512
@@ -18,6 +19,6 @@ hw4box.txt
 hw3bulb.txt
 - reflections
 
-Texture mapping (if working)
+Texture mapping
 
 Constructive solid geometry (if working)
