@@ -5,6 +5,7 @@ import threading
 import time
 import pygame
 import hashlib
+import Image
 from numbers import Number
 
 
@@ -52,6 +53,7 @@ class ObjFile(threading.Thread):
 		global cache
 		global oldHash
 		global lastCacheReset
+		global textures
 
 		fileLock.acquire()
 		self.fread = open(self.fileName, 'r')
@@ -104,12 +106,22 @@ class ObjFile(threading.Thread):
 							else:
 								reflectivity = float(parse[8])
 
+							if (len(parse) < 10):
+								texture = "";
+							else:
+								texture = parse[9]
+
+							if (not (texture in textures.keys()) and len(texture) > 0):
+								tImage = Image.open(texture);
+								pixels = tImage.load();
+								textures[texture] = ImageObject(pixels, tImage.size[0], tImage.size[1]);
+
 							if x != 0:
-								old_objs.append( Plane( Vector( (-d/x), 0, 0), Vector( x, y, z), Vector(255*float(parse[5]), 255*float(parse[6]), 255*float(parse[7])), reflectivity) )
+								old_objs.append( Plane( Vector( (-d/x), 0, 0), Vector( x, y, z), Vector(255*float(parse[5]), 255*float(parse[6]), 255*float(parse[7])), reflectivity, texture) )
 							elif y != 0 :
-								old_objs.append( Plane( Vector( 0, (-d/y), 0), Vector( x, y, z), Vector(255*float(parse[5]), 255*float(parse[6]), 255*float(parse[7])), reflectivity) )
+								old_objs.append( Plane( Vector( 0, (-d/y), 0), Vector( x, y, z), Vector(255*float(parse[5]), 255*float(parse[6]), 255*float(parse[7])), reflectivity, texture) )
 							elif z != 0 :
-								old_objs.append( Plane( Vector( 0, 0, (-d/z) ), Vector( x, y, z), Vector(255*float(parse[5]), 255*float(parse[6]), 255*float(parse[7])), reflectivity) )
+								old_objs.append( Plane( Vector( 0, 0, (-d/z) ), Vector( x, y, z), Vector(255*float(parse[5]), 255*float(parse[6]), 255*float(parse[7])), reflectivity, texture) )
 						elif parse[0] == "sphere" :
 							x = float(parse[1])
 							y = float(parse[2])
@@ -140,9 +152,20 @@ class ObjFile(threading.Thread):
 							if (len(parse) < 9):
 								reflectivity = 0
 							else: 
-								reflectivity = parse[8]
+								reflectivity = float(parse[8])
 
-							old_objs.append( Rectangle(Vector(red, green, blue), v1, v2, v3, v4, reflectivity))
+							if (len(parse) < 10):
+								texture = ""
+							else:
+								texture = parse[9]
+
+							if (not (texture in textures.keys()) and len(texture) > 0):
+								tImage = Image.open(texture);
+								pixels = tImage.load();
+								textures[texture] = ImageObject(pixels, tImage.size[0], tImage.size[1]);
+
+
+							old_objs.append( Rectangle(Vector(red, green, blue), v1, v2, v3, v4, reflectivity, texture))
 						elif parse[0] == "box" :
 							red = 255*float(parse[1])
 							green = 255*float(parse[2])
@@ -162,19 +185,29 @@ class ObjFile(threading.Thread):
 							else:
 								reflectivity = parse[12]
 
+							if (len(parse) < 14):
+								texture = ""
+							else:
+								texture = parse[13]
+
+							if (not (texture in textures.keys()) and len(texture) > 0):
+								tImage = Image.open(texture);
+								pixels = tImage.load();
+								textures[texture] = ImageObject(pixels, tImage.size[0], tImage.size[1]);
+
 							bVerts = [ v1, v2, v3, v4, v5, v6, v7, v8 ]
 
 							bVerts= sorted(bVerts, key=lambda vert: vert.x)
-							old_objs.append( Rectangle(Vector(255, 0, 0), bVerts[0], bVerts[1], bVerts[2], bVerts[3], reflectivity))
-							old_objs.append( Rectangle(Vector(255, 0, 0), bVerts[4], bVerts[5], bVerts[6], bVerts[7], reflectivity))
+							old_objs.append( Rectangle(Vector(255, 0, 0), bVerts[0], bVerts[1], bVerts[2], bVerts[3], reflectivity, texture))
+							old_objs.append( Rectangle(Vector(255, 0, 0), bVerts[4], bVerts[5], bVerts[6], bVerts[7], reflectivity, texture))
 
 							bVerts= sorted(bVerts, key=lambda vert: vert.y)
-							old_objs.append( Rectangle(Vector(0, 255, 0), bVerts[0], bVerts[1], bVerts[2], bVerts[3], reflectivity))
-							old_objs.append( Rectangle(Vector(0, 255, 0), bVerts[4], bVerts[5], bVerts[6], bVerts[7], reflectivity))
+							old_objs.append( Rectangle(Vector(0, 255, 0), bVerts[0], bVerts[1], bVerts[2], bVerts[3], reflectivity, texture))
+							old_objs.append( Rectangle(Vector(0, 255, 0), bVerts[4], bVerts[5], bVerts[6], bVerts[7], reflectivity, texture))
 
 							bVerts= sorted(bVerts, key=lambda vert: vert.z)
-							old_objs.append( Rectangle(Vector(0, 0, 255), bVerts[0], bVerts[1], bVerts[2], bVerts[3], reflectivity))
-							old_objs.append( Rectangle(Vector(0, 0, 255), bVerts[4], bVerts[5], bVerts[6], bVerts[7], reflectivity))
+							old_objs.append( Rectangle(Vector(0, 0, 255), bVerts[0], bVerts[1], bVerts[2], bVerts[3], reflectivity, texture))
+							old_objs.append( Rectangle(Vector(0, 0, 255), bVerts[4], bVerts[5], bVerts[6], bVerts[7], reflectivity, texture))
 						elif parse[0] == "triangle":
 							v0 = old_verts[int(parse[1])]
 							v1 = old_verts[int(parse[2])]
@@ -185,8 +218,18 @@ class ObjFile(threading.Thread):
 							else:
 								reflectivity = float(parse[7])
 
+							if (len(parse) < 9):
+								texture = ""
+							else:
+								texture = parse[8]
+
+							if (not (texture in textures.keys()) and len(texture) > 0):
+								tImage = Image.open(texture);
+								pixels = tImage.load();
+								textures[texture] = ImageObject(pixels, tImage.size[0], tImage.size[1]);
+
 							tri_color = Vector(255*float(parse[4]), 255*float(parse[5]), 255*float(parse[6]))
-							old_objs.append(Triangle(v0, v1, v2, tri_color, reflectivity))
+							old_objs.append(Triangle(v0, v1, v2, tri_color, reflectivity, texture))
 						elif parse[0] == "tetrahedron":
 							v0 = old_verts[int(parse[1])]
 							v1 = old_verts[int(parse[2])]
@@ -256,11 +299,19 @@ class Vector(object):
 		assert type(b) == float or type(b) == int
 		return Vector(self.x*b, self.y*b, self.z*b)
 
+	def __div__(self, b):
+		assert (type(b) == float or type(b) == int) and b != 0
+		return Vector(self.x/b, self.y/b, self.z/b)
+
+	def __mod__(self, b):
+		assert (type(b) == float or type(b) == int) and b != 0
+		return Vector(self.x%b, self.y%b, self.z%b)
+
 	def __str__(self):
 		return "<%s, %s, %s>" % (self.x, self.y, self.z)
 
 class Rectangle(object):
-	def __init__(self, color, v1, v2, v3, v4, reflectivity):
+	def __init__(self, color, v1, v2, v3, v4, reflectivity, texture):
 		self.col = color
 
 		rVerts = [ v1, v2, v3, v4 ]
@@ -300,6 +351,40 @@ class Rectangle(object):
 		self.p = rVerts[0]
 		self.f = reflectivity
 
+		self.texture = texture;
+
+		self.v0 = v1
+		self.v1 = v2
+		self.v2 = v3
+
+		global textures
+		"""http://hugi.scene.org/online/hugi24/coding%20graphics%20bonz%20texture%20mapping,%20part%202.htm"""
+		if (len(texture) > 0):
+			imageObj = textures[texture]
+			width = self.maxX - self.minX;
+			height = self.maxY - self.minY
+
+			uWidth = imageObj.width
+			uHeight = height / width * imageObj.height
+
+			#self.map1 = Vector(v1.x / width * uWidth, v1.y / height * uHeight, 0)
+			#self.map2 = Vector(v2.x / width * uWidth, v2.y / height * uHeight, 0)
+			#self.map3 = Vector(v3.x / width * uWidth, v3.y / height * uHeight, 0)
+			self.map1 = v1
+			self.map2 = v2
+			self.map3 = v3
+
+			den = -self.v1.x*self.v0.y + self.v2.x*self.v0.y + self.v0.x*self.v1.y - self.v2.x*self.v1.y - self.v0.x*self.v2.y + self.v1.x*self.v2.y
+			den = 1 / den
+
+			self.A = (-self.map2.x*self.v0.y + self.map3.x*self.v0.y + self.map1.x*self.v1.y - self.map3.x*self.v1.y - self.map1.x*self.v2.y + self.map2.x*self.v2.y)*den
+			self.B = (self.map2.x*self.v0.x - self.map3.x*self.v0.x - self.map1.x*self.v1.x + self.map3.x*self.v1.x + self.map1.x*self.v2.x - self.map2.x*self.v2.x)*den
+			self.C = (-self.map3.x*self.v1.x*self.v0.y + self.map2.x*self.v2.x*self.v0.y + self.map3.x*self.v0.x*self.v1.y - self.map1.x*self.v2.x*self.v1.y - self.map2.x*self.v0.x*self.v2.y + self.map1.x*self.v1.x*self.v2.y)*den
+
+			self.D = (-self.map2.y*self.v0.y + self.map3.y*self.v0.y + self.map1.y*self.v1.y - self.map3.y*self.v1.y - self.map1.y*self.v2.y + self.map2.y*self.v2.y)*den
+			self.E = (self.map2.y*self.v0.x - self.map3.y*self.v0.x - self.map1.y*self.v1.x + self.map3.y*self.v1.x + self.map1.y*self.v2.x - self.map2.y*self.v2.x)*den
+			self.F2 = (-self.map3.y*self.v1.x*self.v0.y + self.map2.y*self.v2.x*self.v0.y + self.map3.y*self.v0.x*self.v1.y - self.map1.y*self.v2.x*self.v1.y - self.map2.y*self.v0.x*self.v2.y + self.map1.y*self.v1.x*self.v2.y)*den
+
 	def intersection(self, l):
 		d = l.d.dot(self.n)
 		if d == 0:
@@ -310,19 +395,27 @@ class Rectangle(object):
 			global enableOutput
 
 			if (round(point.x, 5) >= self.minX and round(point.x, 5) <= self.maxX and round(point.y, 5) >= self.minY and round(point.y, 5) <= self.maxY and round(point.z, 5) >= self.minZ and round(point.z, 5) <= self.maxZ) :
-				if (enableOutput):
-					print("INTERSECTION AT: "  + str(point.x) + ", " + str(point.y) + ", " + str(point.z))
 				return Intersection(l.o+l.d*d, d, self.n, self)
 			else :
-				if (enableOutput):
-					if (point.x < self.minX or point.x > self.maxX):
-						print("MISS DUE TO X: "  + str(point.x) + ", " + str(point.y) + ", " + str(point.z) + "   minX: " + str(self.minX) + "   maxX: " + str(self.maxX))
-					elif (point.y < self.minY or point.y > self.maxY):
-						print("MISS DUE TO Y: "  + str(point.x) + ", " + str(point.y) + ", " + str(point.z) + "   minY: " + str(self.minY) + "   maxY: " + str(self.maxY))
-					elif (point.z < self.minZ or point.z > self.maxZ):
-						print("MISS DUE TO Z: "  + str(point.x) + ", " + str(point.y) + ", " + str(point.z) + "   minZ: " + str(self.minZ) + "   maxZ: " + str(self.maxZ))
-
 				return Intersection( Vector(0,0,0), -1, Vector(0,0,0), self)
+
+	def getColorAt(self, point):
+		"""http://hugi.scene.org/online/hugi24/coding%20graphics%20bonz%20texture%20mapping,%20part%202.htm"""
+		if (self.texture == ""):
+			return self.col
+
+		global textures
+		imageObj = textures[self.texture]
+		pix = imageObj.pixels
+
+		u = int(self.A*point.x + self.B*point.y + self.C) % imageObj.width
+		v = int(self.D*point.x + self.E*point.y + self.F2) % imageObj.height
+
+		if (enableOutput):
+			print("GETTING COLOR FROM: " + str(u) + ", " + str(v))
+
+		col = pix[u, v]
+		return Vector(col[0], col[1], col[2])
 
 class Sphere(object):
 
@@ -365,14 +458,67 @@ class Sphere(object):
 	def move(self, v):
 		self.c += v
 
+	def getColorAt(self, point):
+		return self.col
+
 
 class Plane(object):
 
-	def __init__(self, point, normal, color, reflection):
+	def __init__(self, point, normal, color, reflection, texture):
 		self.n = normal
 		self.p = point
 		self.col = color
 		self.f = reflection
+		self.texture = texture
+
+		global textures
+		global width
+		global height
+		if (len(texture) > 0):
+			"""http://hugi.scene.org/online/hugi24/coding%20graphics%20bonz%20texture%20mapping,%20part%202.htm"""
+			imageObj = textures[texture]
+
+			t = float(height-1 - 2 * 0) / max(width, height)
+			s = float(2 * 0 - width-1) / max(width, height)
+			ray = Ray(cameraPos, forward + (right * s) + (up * t))
+			self.v0 = self.intersection(ray).p;
+
+			t = float(height-1 - 2 * 0) / max(width, height)
+			s = float(2 * 0 - 0) / max(width, height)
+			ray = Ray(cameraPos, forward + (right * s) + (up * t))
+			self.v1 = self.intersection(ray).p;
+
+			t = float(0 - 2 * 0) / max(width, height)
+			s = float(2 * 0 - 0) / max(width, height)
+			ray = Ray(cameraPos, forward + (right * s) + (up * t))
+			self.v2 = self.intersection(ray).p;
+
+			print(str(self.v0) + " " + str(self.v1) + " " + str(self.v2))
+
+			verts = [self.v0, self.v1, self.v2]
+			verts = sorted(verts, key=lambda vert: vert.x)
+			w = verts[2].x - verts[0].x
+
+			verts = sorted(verts, key=lambda vert: vert.y)
+			h = verts[2].y - verts[0].y
+
+			uWidth = imageObj.width
+			uHeight = h / w * imageObj.height
+
+			self.map1 = Vector(self.v0.x / w * uWidth, self.v0.y / h * uHeight, 0)
+			self.map2 = Vector(self.v1.x / w * uWidth, self.v1.y / h * uHeight, 0)
+			self.map3 = Vector(self.v2.x / w * uWidth, self.v2.y / h * uHeight, 0)
+
+			den = -self.v1.x*self.v0.y + self.v2.x*self.v0.y + self.v0.x*self.v1.y - self.v2.x*self.v1.y - self.v0.x*self.v2.y + self.v1.x*self.v2.y
+			den = 1 / den
+
+			self.A = (-self.map2.x*self.v0.y + self.map3.x*self.v0.y + self.map1.x*self.v1.y - self.map3.x*self.v1.y - self.map1.x*self.v2.y + self.map2.x*self.v2.y)*den
+			self.B = (self.map2.x*self.v0.x - self.map3.x*self.v0.x - self.map1.x*self.v1.x + self.map3.x*self.v1.x + self.map1.x*self.v2.x - self.map2.x*self.v2.x)*den
+			self.C = (-self.map3.x*self.v1.x*self.v0.y + self.map2.x*self.v2.x*self.v0.y + self.map3.x*self.v0.x*self.v1.y - self.map1.x*self.v2.x*self.v1.y - self.map2.x*self.v0.x*self.v2.y + self.map1.x*self.v1.x*self.v2.y)*den
+
+			self.D = (-self.map2.y*self.v0.y + self.map3.y*self.v0.y + self.map1.y*self.v1.y - self.map3.y*self.v1.y - self.map1.y*self.v2.y + self.map2.y*self.v2.y)*den
+			self.E = (self.map2.y*self.v0.x - self.map3.y*self.v0.x - self.map1.y*self.v1.x + self.map3.y*self.v1.x + self.map1.y*self.v2.x - self.map2.y*self.v2.x)*den
+			self.F2 = (-self.map3.y*self.v1.x*self.v0.y + self.map2.y*self.v2.x*self.v0.y + self.map3.y*self.v0.x*self.v1.y - self.map1.y*self.v2.x*self.v1.y - self.map2.y*self.v0.x*self.v2.y + self.map1.y*self.v1.x*self.v2.y)*den
 
 	def intersection(self, l):
 		d = l.d.dot(self.n)
@@ -382,14 +528,60 @@ class Plane(object):
 			d = (self.p - l.o).dot(self.n) / d
 			return Intersection(l.o+l.d*d, d, self.n, self)
 
+	def getColorAt(self, point):
+		"""http://hugi.scene.org/online/hugi24/coding%20graphics%20bonz%20texture%20mapping,%20part%202.htm"""
+		if (self.texture == ""):
+			return self.col
+
+		global textures
+		imageObj = textures[self.texture]
+		pix = imageObj.pixels
+
+		u = int(self.A*point.x + self.B*point.y + self.C) % imageObj.width
+		v = int(self.D*point.x + self.E*point.y + self.F2) % imageObj.height
+
+		col = pix[u, v]
+		return Vector(col[0], col[1], col[2])
 
 class Triangle(object):
-	def __init__(self, v0, v1, v2, color, reflection):
+	def __init__(self, v0, v1, v2, color, reflection, texture):
 		self.v0 = v0
 		self.v1 = v1
 		self.v2 = v2
 		self.col = color
 		self.f = reflection
+		self.texture = texture
+
+		global textures
+		if (len(texture) > 0):
+			imageObj = textures[texture]
+
+			"""http://hugi.scene.org/online/hugi24/coding%20graphics%20bonz%20texture%20mapping,%20part%202.htm"""
+			verts = [v0, v1, v2]
+			verts = sorted(verts, key=lambda vert: vert.x)
+			width = verts[2].x - verts[0].x
+
+			verts = sorted(verts, key=lambda vert: vert.y)
+			height = verts[2].y - verts[0].y
+
+			uWidth = imageObj.width
+			uHeight = height / width * imageObj.height
+
+			self.map1 = Vector(v0.x / width * uWidth, v0.y / height * uHeight, 0)
+			self.map2 = Vector(v1.x / width * uWidth, v1.y / height * uHeight, 0)
+			self.map3 = Vector(v2.x / width * uWidth, v2.y / height * uHeight, 0)
+
+
+			den = -self.v1.x*self.v0.y + self.v2.x*self.v0.y + self.v0.x*self.v1.y - self.v2.x*self.v1.y - self.v0.x*self.v2.y + self.v1.x*self.v2.y
+			den = 1 / den
+
+			self.A = (-self.map2.x*self.v0.y + self.map3.x*self.v0.y + self.map1.x*self.v1.y - self.map3.x*self.v1.y - self.map1.x*self.v2.y + self.map2.x*self.v2.y)*den
+			self.B = (self.map2.x*self.v0.x - self.map3.x*self.v0.x - self.map1.x*self.v1.x + self.map3.x*self.v1.x + self.map1.x*self.v2.x - self.map2.x*self.v2.x)*den
+			self.C = (-self.map3.x*self.v1.x*self.v0.y + self.map2.x*self.v2.x*self.v0.y + self.map3.x*self.v0.x*self.v1.y - self.map1.x*self.v2.x*self.v1.y - self.map2.x*self.v0.x*self.v2.y + self.map1.x*self.v1.x*self.v2.y)*den
+
+			self.D = (-self.map2.y*self.v0.y + self.map3.y*self.v0.y + self.map1.y*self.v1.y - self.map3.y*self.v1.y - self.map1.y*self.v2.y + self.map2.y*self.v2.y)*den
+			self.E = (self.map2.y*self.v0.x - self.map3.y*self.v0.x - self.map1.y*self.v1.x + self.map3.y*self.v1.x + self.map1.y*self.v2.x - self.map2.y*self.v2.x)*den
+			self.F2 = (-self.map3.y*self.v1.x*self.v0.y + self.map2.y*self.v2.x*self.v0.y + self.map3.y*self.v0.x*self.v1.y - self.map1.y*self.v2.x*self.v1.y - self.map2.y*self.v0.x*self.v2.y + self.map1.y*self.v1.x*self.v2.y)*den
 
 	def normal(self):
 		v0v1 = self.v1 - self.v0
@@ -444,6 +636,21 @@ class Triangle(object):
 		self.v1 += v
 		self.v2 += v
 
+	def getColorAt(self, point):
+
+		"""http://hugi.scene.org/online/hugi24/coding%20graphics%20bonz%20texture%20mapping,%20part%202.htm"""
+		if (self.texture == ""):
+			return self.col
+
+		global textures
+		imageObj = textures[self.texture]
+		pix = imageObj.pixels
+
+		u = int(self.A*point.x + self.B*point.y + self.C) % imageObj.width
+		v = int(self.D*point.x + self.E*point.y + self.F2) % imageObj.height
+
+		col = pix[u, v]
+		return Vector(col[0], col[1], col[2])
 
 class Tetrahedron(object):
 	def __init__(self, vertices, triangles):
@@ -470,6 +677,12 @@ class CacheObject(object):
 	def __init__(self, hash, color):
 		self.hash = hash
 		self.color = color
+
+class ImageObject(object):
+	def __init__(self, pixels, width, height):
+		self.pixels= pixels
+		self.width = width
+		self.height = height
 
 def testRay(ray, objects, ignore=None):
 	intersect = Intersection( Vector(0,0,0), -1, Vector(0,0,0), None)
@@ -523,6 +736,8 @@ def trace(ray, objects, hash):
 		else :
 			rounding = 5
 
+		rounding = 2
+
 		if intersect.n.dot(eyeDir) < 0 :
 			intersect.n = intersect.n * -1
 
@@ -560,13 +775,13 @@ def recalculateColor(intersect):
 		inter = testRay( ray, objs, intersect.obj)
 		dist = math.sqrt( (intersect.p.x - b[0])**2 + (intersect.p.y - b[1])**2 + (intersect.p.z - b[2])**2 )
 		if inter.d == -1 or inter.d > dist:
-			nrcol = Vector( nrcol.x + intersect.obj.col.x * b[3] * max(intersect.n.dot(lightDir), 0), nrcol.y + intersect.obj.col.y * b[4] * max(intersect.n.dot(lightDir), 0), nrcol.z + intersect.obj.col.z * b[5] * max(intersect.n.dot(lightDir), 0))
+			nrcol = Vector( nrcol.x + intersect.obj.getColorAt(intersect.p).x * b[3] * max(intersect.n.dot(lightDir), 0), nrcol.y + intersect.obj.getColorAt(intersect.p).y * b[4] * max(intersect.n.dot(lightDir), 0), nrcol.z + intersect.obj.getColorAt(intersect.p).z * b[5] * max(intersect.n.dot(lightDir), 0))
 	for s in suns:
 		lightDir = Vector( s[0], s[1], s[2] )
 		ray = Ray( intersect.p, lightDir )
 		inter = testRay( ray, objs, intersect.obj)
 		if inter.d == -1:
-			nrcol = Vector( nrcol.x + intersect.obj.col.x * s[3] * max(intersect.n.dot(lightDir), 0), nrcol.y + intersect.obj.col.y * s[4] * max(intersect.n.dot(lightDir), 0), nrcol.z + intersect.obj.col.z * s[5] * max(intersect.n.dot(lightDir), 0))
+			nrcol = Vector( nrcol.x + intersect.obj.getColorAt(intersect.p).x * s[3] * max(intersect.n.dot(lightDir), 0), nrcol.y + intersect.obj.getColorAt(intersect.p).y * s[4] * max(intersect.n.dot(lightDir), 0), nrcol.z + intersect.obj.getColorAt(intersect.p).z * s[5] * max(intersect.n.dot(lightDir), 0))
 
 	#Get color of reflection
 	eyeDir = Vector( cameraPos.x - intersect.p.x, cameraPos.y - intersect.p.y, cameraPos.z - intersect.p.z)
@@ -585,13 +800,13 @@ def recalculateColor(intersect):
 			inter = testRay( ray, objs, reflInter.obj)
 			dist = math.sqrt( (reflInter.p.x - b[0])**2 + (reflInter.p.y - b[1])**2 + (reflInter.p.z - b[2])**2 )
 			if inter.d == -1 or inter.d > dist:
-				rcol = Vector( rcol.x + reflInter.obj.col.x * b[3] * max(reflInter.n.dot(lightDir), 0), rcol.y + reflInter.obj.col.y * b[4] * max(reflInter.n.dot(lightDir), 0), rcol.z + reflInter.obj.col.z * b[5] * max(reflInter.n.dot(lightDir), 0))
+				rcol = Vector( rcol.x + reflInter.obj.getColorAt(intersect.p).x * b[3] * max(reflInter.n.dot(lightDir), 0), rcol.y + reflInter.obj.getColorAt(intersect.p).y * b[4] * max(reflInter.n.dot(lightDir), 0), rcol.z + reflInter.obj.getColorAt(intersect.p).z * b[5] * max(reflInter.n.dot(lightDir), 0))
 		for s in suns:
 			lightDir = Vector( s[0], s[1], s[2] )
 			ray = Ray( reflInter.p, lightDir )
 			inter = testRay( ray, objs, reflInter.obj)
 			if inter.d == -1:
-				rcol = Vector( rcol.x + reflInter.obj.col.x * s[3] * max(reflInter.n.dot(lightDir), 0), rcol.y + reflInter.obj.col.y * s[4] * max(reflInter.n.dot(lightDir), 0), rcol.z + reflInter.obj.col.z * s[5] * max(reflInter.n.dot(lightDir), 0))
+				rcol = Vector( rcol.x + reflInter.obj.getColorAt(intersect.p).x * s[3] * max(reflInter.n.dot(lightDir), 0), rcol.y + reflInter.obj.getColorAt(intersect.p).y * s[4] * max(reflInter.n.dot(lightDir), 0), rcol.z + reflInter.obj.getColorAt(intersect.p).z * s[5] * max(reflInter.n.dot(lightDir), 0))
 	cx = intersect.obj.f*rcol.x + (1-intersect.obj.f)*nrcol.x
 	cy = intersect.obj.f*rcol.y + (1-intersect.obj.f)*nrcol.y
 	cz = intersect.obj.f*rcol.z + (1-intersect.obj.f)*nrcol.z
@@ -627,6 +842,7 @@ global cacheMissesDueToHash
 global enableOutput
 global pixel_objects
 global selected_obj
+global textures
 
 running = True
 
@@ -653,6 +869,7 @@ oldHash = "";
 lastCacheReset = 0;
 enableOutput = False
 pixel_objects = {}
+textures = dict()
 selected_obj = None
 cameraPos = Vector(0,0,0)
 

@@ -1,9 +1,9 @@
 png 120 120 hw4triangle.png
 
-vertex -.25 -.25 .5
-vertex .25 -.25 .5
-vertex 0 .25 .5
-triangle 0 1 2 1 1 1
+vertex -1 -1 .5
+vertex 1 -1 .5
+vertex 0 1 .5
+triangle 0 1 2 1 1 1 0 textures/brick.jpg
 sun 0 0 -1 1 1 1
 sun 0 0 1 1 1 1
-sphere 0 0 -1 0.3 1 1 1
+plaane 0 0 1 1 0 0 1 0 textures/water.jpg

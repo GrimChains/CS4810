@@ -8,16 +8,16 @@ vertex -0.5 -0.5 -0.5
 vertex -0.5 0.5 -0.5
 vertex 0.5 -0.5 -0.5
 vertex 0.5 0.5 -0.5
-box 0 0 1 0 1 2 3 4 5 6 7
+baox 0 0 1 0 1 2 3 4 5 6 7
 vertex -0.5 -0.75 -1
 vertex 0.5 -0.75 -1
 vertex -0.5 -0.75 -0.5
 vertex 0.5 -0.75 -0.5
 recat 1 0 0 8 9 10 11
-aplane 0 0 1 -0.75 1 0 0
+plaane 0 0 1 -0.75 1 0 0
 vertex -2 2 -1.5
 vertex -2 -2 -1.5
 vertex 2 2 -1.5
 vertex 2 -2 -1.5
-arect 1 0 1 12 13 14 15
+rect 1 0 1 12 13 14 15 0 textures/brick.jpg
 vertex 0 2 -1.5
