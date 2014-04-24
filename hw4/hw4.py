@@ -120,13 +120,17 @@ class ObjFile(threading.Thread):
                             y = float(parse[2])
                             z = float(parse[3])
                             r = float(parse[4])
-
                             if (len(parse) < 9):
                                 reflectivity = 0
-                            else:
+                                refractivity = 1
+                            elif (len(parse) < 10):
                                 reflectivity = float(parse[8])
+                                refractivity = 1
+                            else:
+                                reflectivity = 0
+                                refractivity = float(parse[9])
 
-                            old_objs.append( Sphere( Vector( x, y, z), r, Vector(float(parse[5])*255.0, float(parse[6])*255.0, float(parse[7])*255.0), reflectivity))
+                            old_objs.append( Sphere( Vector( x, y, z), r, Vector(float(parse[5])*255.0, float(parse[6])*255.0, float(parse[7])*255.0), reflectivity, refractivity))
                         elif parse[0] == "vertex":
                             x = float(parse[1])
                             y = float(parse[2])
@@ -352,11 +356,12 @@ class Rectangle(object):
 
 class Sphere(object):
 
-    def __init__(self, center, radius, color, reflection ):
+    def __init__(self, center, radius, color, reflection, refraction ):
         self.c = center
         self.r = radius
         self.col = color
         self.f = reflection
+        self.a = refraction
 
     def intersection(self, l):
         p0c = l.o - self.c
@@ -383,7 +388,6 @@ class Sphere(object):
             else:
                 t = t2;
         return Intersection( (l.o + l.d * t), math.sqrt( (l.d.x * t)**2 + (l.d.y * t)**2 + (l.d.z * t)**2), self.normal(l.o + l.d*t), self )
-
 
     def normal(self, b):
         return (b - self.c).normal()
@@ -505,6 +509,16 @@ def testRay(ray, objects, ignore=None):
                 intersect = currentIntersect
     return intersect
 
+def refractRay(ray, objects, object):
+    intersect = Intersection( Vector(0,0,0), -1, Vector(0,0,0), None)
+    for obj in objects:
+        if obj is object:
+            currentIntersect = obj.intersection(ray)
+            if currentIntersect.d > 0 and intersect.d < 0:
+                intersect = currentIntersect
+            elif 0 < currentIntersect.d < intersect.d:
+                intersect = currentIntersect
+    return intersect
 
 def trace(ray, objects, hash):
     global suns
@@ -590,9 +604,12 @@ def recalculateColor(intersect):
         if inter.d == -1:
             nrcol = Vector( nrcol.x + intersect.obj.col.x * s[3] * max(intersect.n.dot(lightDir), 0), nrcol.y + intersect.obj.col.y * s[4] * max(intersect.n.dot(lightDir), 0), nrcol.z + intersect.obj.col.z * s[5] * max(intersect.n.dot(lightDir), 0))
 
-    #Get color of reflection (if object is reflective)
+    #Get color of reflection or refraction
+    #http://www.cs.sjsu.edu/~teoh/teaching/previous/cs116b_sp08/lectures/lecture15_raytracing.ppt
+    #https://www.cs.unc.edu/~rademach/xroads-RT/RTarticle.html
+    #http://ray-tracer-concept.blogspot.com/2011/12/refraction.html
+    eyeDir = Vector( cameraPos.x - intersect.p.x, cameraPos.y - intersect.p.y, cameraPos.z - intersect.p.z)
     if intersect.obj.f != 0:
-        eyeDir = Vector( cameraPos.x - intersect.p.x, cameraPos.y - intersect.p.y, cameraPos.z - intersect.p.z)
         if intersect.n.dot(eyeDir) < 0 :
             intersect.n = intersect.n * -1
         rx = -eyeDir.x + 2*(intersect.n.x)*(eyeDir.dot(intersect.n))
@@ -619,7 +636,46 @@ def recalculateColor(intersect):
         cz = intersect.obj.f*rcol.z + (1-intersect.obj.f)*nrcol.z
         col = Vector( cx, cy, cz )
         return col
-    else:
+    #If object not reflective, check for transparency
+    elif type(intersect.obj) is not Plane and intersect.obj.a != 1:
+        #Find first refracted ray
+        n = 1.0 / intersect.obj.a
+        c1 = intersect.n.dot(eyeDir)
+        c2 = math.sqrt(1 - n*n * (1 - c1*c1))
+        rx = (n * c1 - c2) * intersect.n.x - (n * eyeDir.x)
+        ry = (n * c1 - c2) * intersect.n.y - (n * eyeDir.y)
+        rz = (n * c1 - c2) * intersect.n.z - (n * eyeDir.z)
+        refractRay1 = Ray( Vector(intersect.p.x, intersect.p.y, intersect.p.z ), Vector( rx, ry, rz ))
+
+        #Find second refracted ray (leaving object)
+        intersect2 = refractRay(refractRay1, objs, intersect.obj)
+        n = intersect.obj.a
+        c1 = -intersect.n.dot(Vector( -refractRay1.d.x, -refractRay1.d.y, -refractRay1.d.z))
+        #print(c1)
+        c2 = math.sqrt(1 - n*n * (1 - c1*c1))
+        rx = (n * c1 - c2) * -intersect2.n.x - (n * -refractRay1.d.x)
+        ry = (n * c1 - c2) * -intersect2.n.y - (n * -refractRay1.d.y)
+        rz = (n * c1 - c2) * -intersect2.n.z - (n * -refractRay1.d.z)
+        refractRay2 = Ray( Vector(intersect2.p.x, intersect2.p.y, intersect2.p.z ), Vector( rx, ry, rz ))
+
+        #See if final refraction ray collides with object
+        refractInter = testRay( refractRay2, objs, intersect.obj)
+        if refractInter.d != -1:  #refraction ray does collide with object - get color of that object at that spot
+            for b in bulbs:
+                lightDir = Vector( b[0] - refractInter.p.x, b[1] - refractInter.p.y, b[2] - refractInter.p.z).normal()
+                ray = Ray( refractInter.p, lightDir )
+                inter = testRay( ray, objs, refractInter.obj)
+                dist = math.sqrt( (refractInter.p.x - b[0])**2 + (refractInter.p.y - b[1])**2 + (refractInter.p.z - b[2])**2 )
+                if inter.d == -1 or inter.d > dist:
+                    rcol = Vector( rcol.x + refractInter.obj.col.x * b[3] * max(refractInter.n.dot(lightDir), 0), rcol.y + refractInter.obj.col.y * b[4] * max(refractInter.n.dot(lightDir), 0), rcol.z + refractInter.obj.col.z * b[5] * max(refractInter.n.dot(lightDir), 0))
+            for s in suns:
+                lightDir = Vector( s[0], s[1], s[2] )
+                ray = Ray( refractInter.p, lightDir )
+                inter = testRay( ray, objs, refractInter.obj)
+                if inter.d == -1:
+                    rcol = Vector( rcol.x + refractInter.obj.col.x * s[3] * max(refractInter.n.dot(lightDir), 0), rcol.y + refractInter.obj.col.y * s[4] * max(refractInter.n.dot(lightDir), 0), rcol.z + refractInter.obj.col.z * s[5] * max(refractInter.n.dot(lightDir), 0))
+        return rcol
+    else:  #Not reflective or transparent
         return nrcol
 
 
